@@ -238,10 +238,9 @@ export default function Home() {
     }
   };
 
-  // Circular gauge parameter calculation
-  const radius = 50;
-  const circumference = 2 * Math.PI * radius;
-  const getStrokeDashoffset = (score: number) => circumference - (score / 100) * circumference;
+  // Circular gauge parameter calculation — use static constant to avoid SSR/client float mismatch
+  const GAUGE_CIRCUMFERENCE = 314.159; // 2 * Math.PI * 50, pre-computed
+  const getGaugeDashoffset = (score: number) => GAUGE_CIRCUMFERENCE - (score / 100) * GAUGE_CIRCUMFERENCE;
 
   return (
     <div className="flex-1 w-full max-w-7xl mx-auto px-4 py-8 sm:py-12 md:py-20 flex flex-col gap-8 md:gap-12">
@@ -400,13 +399,13 @@ export default function Home() {
                       stroke={analysisResult.score >= 70 ? "#10b981" : analysisResult.score >= 50 ? "#f59e0b" : "#ef4444"}
                       strokeWidth="10"
                       fill="transparent"
-                      strokeDasharray={2 * Math.PI * 50}
-                      strokeDashoffset={2 * Math.PI * 50 - (analysisResult.score / 100) * 2 * Math.PI * 50}
+                      strokeDasharray={GAUGE_CIRCUMFERENCE}
+                      strokeDashoffset={getGaugeDashoffset(analysisResult.score)}
                       strokeLinecap="round"
                       className="progress-ring__circle transition-all duration-500 ease-out"
                     />
                   </svg>
-                  <div className="absolute flex flex-col items-center justify-center">
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
                     <span className="text-2xl sm:text-3xl font-extrabold tracking-tight">{analysisResult.score}</span>
                     <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">ATS Score</span>
                   </div>
