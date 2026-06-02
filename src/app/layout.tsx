@@ -13,8 +13,48 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AI-Powered ATS Resume Scorer & Analyzer",
-  description: "Evaluate your resume matching score using Gemini AI. Get instant keyword matching, missing skills analysis, and structural recommendations.",
+  metadataBase: new URL("https://ats-score.vercel.app/"),
+  title: {
+    default: "AI-Powered ATS Resume Scorer & Analyzer",
+    template: "%s | ATS Scorer",
+  },
+  description: "Evaluate your resume matching score using Gemini AI. Get instant keyword matching, missing skills analysis, and structural recommendations to beat Applicant Tracking Systems.",
+  keywords: ["ATS resume checker", "resume score", "AI resume analyzer", "Gemini AI", "job description match", "ATS optimization", "resume parsing"],
+  authors: [{ name: "ATS Scorer Team" }],
+  creator: "ATS Scorer",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://ats-score.vercel.app/", // Assuming this based on common Next.js deployments, adjust if needed
+    title: "AI-Powered ATS Resume Scorer & Analyzer",
+    description: "Evaluate your resume matching score using Gemini AI. Get instant keyword matching, missing skills analysis, and structural recommendations to beat Applicant Tracking Systems.",
+    siteName: "ATS Resume Scorer",
+    images: [
+      {
+        url: "/og-image.jpg", // You can add an actual image to the public folder later
+        width: 1200,
+        height: 630,
+        alt: "ATS Resume Scorer Dashboard Preview",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "AI-Powered ATS Resume Scorer & Analyzer",
+    description: "Evaluate your resume matching score using Gemini AI. Get instant keyword matching and structural recommendations.",
+    images: ["/og-image.jpg"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
 };
 
 export default function RootLayout({
