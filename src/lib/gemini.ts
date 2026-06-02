@@ -181,7 +181,7 @@ export async function processDocument(
   jobDescription?: string
 ): Promise<ATSAnalysisResult> {
   const ai = getGeminiClient();
-  const modelName = "gemini-3.5-flash";
+  const modelName = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
   // Build the JD clause (shared between PDF and DOCX paths)
   const jdClause =
