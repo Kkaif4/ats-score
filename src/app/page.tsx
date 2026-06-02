@@ -382,49 +382,28 @@ export default function Home() {
               <div className="flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-8 border-b border-gray-800 pb-4 md:pb-6 mb-4 md:mb-6">
                 {/* Score gauge visual */}
                 <div className="relative w-28 h-28 sm:w-36 sm:h-36 flex items-center justify-center shrink-0">
-                  <svg className="w-full h-full transform -rotate-90">
+                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
+                    {/* Background track circle */}
                     <circle
-                      cx="56"
-                      cy="56"
-                      r={radius}
+                      cx="60"
+                      cy="60"
+                      r="50"
                       stroke="rgba(31, 41, 55, 0.5)"
                       strokeWidth="10"
                       fill="transparent"
-                      className="hidden sm:block"
                     />
+                    {/* Progress indicator circle */}
                     <circle
-                      cx="56"
-                      cy="56"
-                      r={radius}
+                      cx="60"
+                      cy="60"
+                      r="50"
                       stroke={analysisResult.score >= 70 ? "#10b981" : analysisResult.score >= 50 ? "#f59e0b" : "#ef4444"}
                       strokeWidth="10"
                       fill="transparent"
-                      strokeDasharray={circumference}
-                      strokeDashoffset={getStrokeDashoffset(analysisResult.score)}
+                      strokeDasharray={2 * Math.PI * 50}
+                      strokeDashoffset={2 * Math.PI * 50 - (analysisResult.score / 100) * 2 * Math.PI * 50}
                       strokeLinecap="round"
-                      className="progress-ring__circle hidden sm:block"
-                    />
-                    {/* Responsive mobile circles */}
-                    <circle
-                      cx="56"
-                      cy="56"
-                      r="40"
-                      stroke="rgba(31, 41, 55, 0.5)"
-                      strokeWidth="8"
-                      fill="transparent"
-                      className="block sm:hidden"
-                    />
-                    <circle
-                      cx="56"
-                      cy="56"
-                      r="40"
-                      stroke={analysisResult.score >= 70 ? "#10b981" : analysisResult.score >= 50 ? "#f59e0b" : "#ef4444"}
-                      strokeWidth="8"
-                      fill="transparent"
-                      strokeDasharray={2 * Math.PI * 40}
-                      strokeDashoffset={2 * Math.PI * 40 - (analysisResult.score / 100) * 2 * Math.PI * 40}
-                      strokeLinecap="round"
-                      className="progress-ring__circle block sm:hidden"
+                      className="progress-ring__circle transition-all duration-500 ease-out"
                     />
                   </svg>
                   <div className="absolute flex flex-col items-center justify-center">
