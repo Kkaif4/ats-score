@@ -6,9 +6,20 @@ import { Turnstile } from "@marsidev/react-turnstile";
 // Standard Site Key for Cloudflare Turnstile (uses test key if none defined in public env)
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "1x00000000000000000000AA";
 
+interface SectionScores {
+  keywordMatch: number;
+  experienceQuality: number;
+  structure: number;
+  skills: number;
+  formatting: number;
+  education: number;
+  contactInfo: number;
+}
+
 interface ATSAnalysis {
   score: number;
   summary: string;
+  sectionScores: SectionScores;
   matchingKeywords: string[];
   missingKeywords: string[];
   recommendations: string[];
@@ -416,6 +427,54 @@ export default function Home() {
                   <p className="text-gray-400 text-xs sm:text-sm leading-relaxed">{analysisResult.summary}</p>
                 </div>
               </div>
+
+              {/* Section Score Breakdown Bars */}
+              {analysisResult.sectionScores && (
+                <div className="border-b border-gray-800 pb-4 md:pb-6 mb-4 md:mb-6">
+                  <h4 className="text-xs sm:text-sm font-semibold text-gray-300 mb-4 uppercase tracking-wider flex items-center gap-2">
+                    <svg className="w-4 h-4 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    Score Breakdown
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
+                    {[
+                      { label: "Keyword Match", weight: "30%", value: analysisResult.sectionScores.keywordMatch },
+                      { label: "Experience Quality", weight: "20%", value: analysisResult.sectionScores.experienceQuality },
+                      { label: "Resume Structure", weight: "15%", value: analysisResult.sectionScores.structure },
+                      { label: "Skills Section", weight: "10%", value: analysisResult.sectionScores.skills },
+                      { label: "Formatting", weight: "10%", value: analysisResult.sectionScores.formatting },
+                      { label: "Education", weight: "10%", value: analysisResult.sectionScores.education },
+                      { label: "Contact Info", weight: "5%", value: analysisResult.sectionScores.contactInfo },
+                    ].map((factor) => (
+                      <div key={factor.label} className="flex flex-col gap-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-400">
+                            {factor.label} <span className="text-gray-600">· {factor.weight}</span>
+                          </span>
+                          <span className={`text-xs font-bold ${
+                            factor.value >= 70 ? "text-emerald-400" : factor.value >= 50 ? "text-amber-400" : "text-red-400"
+                          }`}>
+                            {factor.value}
+                          </span>
+                        </div>
+                        <div className="h-1.5 w-full bg-gray-800 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all duration-700 ease-out ${
+                              factor.value >= 70
+                                ? "bg-gradient-to-r from-emerald-500 to-emerald-400"
+                                : factor.value >= 50
+                                  ? "bg-gradient-to-r from-amber-500 to-amber-400"
+                                  : "bg-gradient-to-r from-red-500 to-red-400"
+                            }`}
+                            style={{ width: `${factor.value}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Detailed match metrics */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
