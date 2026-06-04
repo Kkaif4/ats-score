@@ -500,6 +500,27 @@ export default function ReportClientView({ report }: ReportClientViewProps) {
             </aside>
           </div>
         </main>
+
+        {/* Semantic Footer */}
+        <footer className="w-full max-w-7xl mx-auto px-4 py-8 mt-12 border-t border-gray-800/60 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
+          <p>
+            © {new Date().getFullYear()} ATS Resume Scorer. All rights reserved.
+          </p>
+          <div className="flex gap-4">
+            <Link
+              href="/guide"
+              className="hover:text-gray-300 transition-colors"
+            >
+              Guide & FAQ
+            </Link>
+            <Link href="/privacy" className="hover:text-gray-300 transition-colors">
+              Privacy Policy
+            </Link>
+            <Link href="/terms" className="hover:text-gray-300 transition-colors">
+              Terms of Service
+            </Link>
+          </div>
+        </footer>
       </div>
 
       {/* Toast Notification */}

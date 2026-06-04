@@ -559,21 +559,7 @@ export default function Home() {
     }
   };
 
-  // Circular gauge parameter calculation — use static constant to avoid SSR/client float mismatch
   const GAUGE_CIRCUMFERENCE = 314.159; // 2 * Math.PI * 50, pre-computed
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "WebApplication",
-    "name": "AI-Powered ATS Resume Scorer & Analyzer",
-    "applicationCategory": "BusinessApplication",
-    "operatingSystem": "All",
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "USD",
-    },
-  };
-
   const getGaugeDashoffset = (score: number) =>
     GAUGE_CIRCUMFERENCE - (score / 100) * GAUGE_CIRCUMFERENCE;
 
@@ -588,10 +574,6 @@ export default function Home() {
         backgroundAttachment: "fixed",
       }}
     >
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
       <div
         className={`flex-1 w-full mx-auto px-4 py-8 sm:py-12 md:py-20 flex flex-col gap-8 md:gap-12 relative z-10 ${
           showPreviewPanel
@@ -645,6 +627,7 @@ export default function Home() {
                 >
                   {/* Drag and drop zone */}
                   <div
+                    id="file-upload-dropzone"
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
@@ -654,6 +637,7 @@ export default function Home() {
                     }`}
                   >
                     <input
+                      id="file-upload-input"
                       type="file"
                       ref={fileInputRef}
                       onChange={handleFileChange}
@@ -684,6 +668,7 @@ export default function Home() {
                           {(file.size / 1024 / 1024).toFixed(2)} MB
                         </p>
                         <button
+                          id="remove-file-btn"
                           type="button"
                           onClick={handleRemoveFile}
                           className="mt-3 px-4 py-1.5 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-full text-xs font-medium transition-colors"
@@ -791,6 +776,7 @@ export default function Home() {
                     </div>
 
                     <button
+                      id="analyze-btn"
                       type="submit"
                       disabled={
                         !isMounted || isProcessing || !file || !docCaptchaToken
@@ -1536,12 +1522,12 @@ export default function Home() {
             >
               Guide & FAQ
             </Link>
-            <a href="#" className="hover:text-gray-300 transition-colors">
+            <Link href="/privacy" className="hover:text-gray-300 transition-colors">
               Privacy Policy
-            </a>
-            <a href="#" className="hover:text-gray-300 transition-colors">
+            </Link>
+            <Link href="/terms" className="hover:text-gray-300 transition-colors">
               Terms of Service
-            </a>
+            </Link>
           </div>
         </footer>
 
@@ -1553,20 +1539,29 @@ export default function Home() {
               "@context": "https://schema.org",
               "@graph": [
                 {
-                  "@type": "SoftwareApplication",
-                  name: "ATS Resume Scorer",
-                  applicationCategory: "BusinessApplication",
-                  operatingSystem: "Any",
-                  offers: {
+                  "@type": "WebApplication",
+                  "@id": "https://ats-score-gamma.vercel.app/#webapp",
+                  "url": "https://ats-score-gamma.vercel.app/",
+                  "name": "AI-Powered ATS Resume Scorer & Analyzer",
+                  "applicationCategory": "BusinessApplication",
+                  "operatingSystem": "All",
+                  "browserRequirements": "Requires JavaScript. Requires HTML5.",
+                  "offers": {
                     "@type": "Offer",
-                    price: "0",
-                    priceCurrency: "USD",
+                    "price": "0",
+                    "priceCurrency": "USD",
+                    "category": "Free"
                   },
-                  description:
-                    "A free AI-powered tool to calculate your ATS resume score, identify missing keywords, and optimize your resume for Applicant Tracking Systems.",
-                  url: "https://ats-score-gamma.vercel.app/",
+                  "description": "Evaluate resume performance against Applicant Tracking Systems using Gemini AI. Get instant keyword matching, missing skills analysis, and structural recommendations."
                 },
-              ],
+                {
+                  "@type": "WebSite",
+                  "@id": "https://ats-score-gamma.vercel.app/#website",
+                  "url": "https://ats-score-gamma.vercel.app/",
+                  "name": "ATS Resume Scorer",
+                  "description": "Evaluate resume performance against industry-standard parser patterns."
+                }
+              ]
             }),
           }}
         />

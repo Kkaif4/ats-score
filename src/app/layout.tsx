@@ -15,6 +15,9 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://ats-score-gamma.vercel.app/"),
+  alternates: {
+    canonical: "https://ats-score-gamma.vercel.app/",
+  },
   title: {
     default: "AI-Powered ATS Resume Scorer & Analyzer",
     template: "%s | ATS Scorer",

@@ -88,7 +88,7 @@ export default function GuidePage() {
           <div className="space-y-4">
             <details className="bg-gray-800/10 border border-gray-800 p-5 rounded-xl group cursor-pointer">
               <summary className="font-semibold text-gray-200 flex justify-between items-center outline-none">
-                What is a good ATS score?
+                <h3 className="text-base font-semibold text-gray-200">What is a good ATS score?</h3>
                 <span className="text-gray-500 group-open:rotate-180 transition-transform">▼</span>
               </summary>
               <p className="text-sm text-gray-400 mt-4 leading-relaxed">
@@ -97,7 +97,7 @@ export default function GuidePage() {
             </details>
             <details className="bg-gray-800/10 border border-gray-800 p-5 rounded-xl group cursor-pointer">
               <summary className="font-semibold text-gray-200 flex justify-between items-center outline-none">
-                How do Applicant Tracking Systems work?
+                <h3 className="text-base font-semibold text-gray-200">How do Applicant Tracking Systems work?</h3>
                 <span className="text-gray-500 group-open:rotate-180 transition-transform">▼</span>
               </summary>
               <p className="text-sm text-gray-400 mt-4 leading-relaxed">
@@ -106,7 +106,7 @@ export default function GuidePage() {
             </details>
             <details className="bg-gray-800/10 border border-gray-800 p-5 rounded-xl group cursor-pointer">
               <summary className="font-semibold text-gray-200 flex justify-between items-center outline-none">
-                Why is my resume score low even with good experience?
+                <h3 className="text-base font-semibold text-gray-200">Why is my resume score low even with good experience?</h3>
                 <span className="text-gray-500 group-open:rotate-180 transition-transform">▼</span>
               </summary>
               <p className="text-sm text-gray-400 mt-4 leading-relaxed">
@@ -120,6 +120,17 @@ export default function GuidePage() {
       {/* Semantic Footer */}
       <footer className="w-full max-w-7xl mx-auto py-8 mt-12 border-t border-gray-800/60 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
         <p>© {new Date().getFullYear()} ATS Resume Scorer. All rights reserved.</p>
+        <div className="flex gap-4">
+          <Link href="/" className="hover:text-gray-300 transition-colors">
+            Home
+          </Link>
+          <Link href="/privacy" className="hover:text-gray-300 transition-colors">
+            Privacy Policy
+          </Link>
+          <Link href="/terms" className="hover:text-gray-300 transition-colors">
+            Terms of Service
+          </Link>
+        </div>
       </footer>
 
       {/* Structured Data (JSON-LD) for SEO */}
