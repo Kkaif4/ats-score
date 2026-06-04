@@ -584,11 +584,11 @@ export default function Home() {
         {/* Brand Header */}
         <header className="text-center flex flex-col items-center gap-3 md:gap-4">
           <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold tracking-tight">
-            AI Resume <span className="text-gradient">ATS Scorer</span>
+            Free ATS Resume <span className="text-gradient">Score Calculator</span>
           </h1>
           <p className="text-gray-400 max-w-xl text-sm sm:text-base md:text-lg px-2">
-            Evaluate resume performance against industry-standard parser
-            patterns. Upload PDF or DOCX format to receive matching metrics.
+            Calculate your score instantly using our advanced AI-powered ATS Resume Score Calculator.
+            Upload PDF or DOCX format to analyze keyword matches, formatting, and structural alignment for free.
           </p>
         </header>
 

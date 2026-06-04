@@ -19,14 +19,14 @@ export const metadata: Metadata = {
     canonical: "https://ats-score-gamma.vercel.app/",
   },
   title: {
-    default: "Free ATS Resume Scorer - AI Resume Analyzer & Scanner",
-    template: "%s | ATS Resume Scorer",
+    default: "Free ATS Resume Score Calculator - AI Resume Analyzer",
+    template: "%s | ATS Resume Score Calculator",
   },
   description:
     "Evaluate your resume matching score for free using Gemini AI. Get a free resume analysis with instant keyword matching, missing skills, and optimization recommendations.",
-  applicationName: "ATS Resume Scorer",
+  applicationName: "ATS Resume Score Calculator",
   appleWebApp: {
-    title: "ATS Resume Scorer",
+    title: "ATS Resume Score Calculator",
     statusBarStyle: "default",
     capable: true,
   },
@@ -46,22 +46,22 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: "https://ats-score-gamma.vercel.app/",
-    title: "Free ATS Resume Scorer - AI Resume Analyzer",
+    title: "Free ATS Resume Score Calculator - AI Resume Analyzer",
     description:
       "Evaluate your resume matching score for free using Gemini AI. Get a free resume analysis with instant keyword matching, missing skills, and optimization recommendations.",
-    siteName: "ATS Resume Scorer",
+    siteName: "ATS Resume Score Calculator",
     images: [
       {
         url: "/ats-scorer-image.png",
         width: 1200,
         height: 630,
-        alt: "ATS Resume Scorer Dashboard Preview",
+        alt: "Free ATS Resume Score Calculator Preview",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Free ATS Resume Scorer - AI Resume Analyzer",
+    title: "Free ATS Resume Score Calculator - AI Resume Analyzer",
     description:
       "Evaluate your resume matching score for free using Gemini AI. Get a free resume analysis with instant keyword matching, missing skills, and optimization recommendations.",
     images: ["/ats-scorer-image.png"],
@@ -97,6 +97,12 @@ export default function RootLayout({
     >
       {gaId && (
         <>
+          <link
+            rel="sitemap"
+            type="application/xml"
+            title="Sitemap"
+            href="/sitemap.xml"
+          />
           <Script
             src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
             strategy="afterInteractive"
