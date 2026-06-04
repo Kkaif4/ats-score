@@ -95,6 +95,7 @@ export async function POST(request: NextRequest) {
         userAgent,
         os: clientOS,
         browser: clientBrowser,
+        fingerprint,
       },
     });
 

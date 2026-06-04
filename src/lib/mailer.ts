@@ -11,6 +11,12 @@ interface FeedbackEmailData {
     userAgent: string;
     os: string;
     browser: string;
+    fingerprint?: {
+      browserFingerprint?: string;
+      screenResolution?: string;
+      language?: string;
+      timezone?: string;
+    };
   };
 }
 
@@ -97,6 +103,20 @@ export async function sendFeedbackEmail(data: FeedbackEmailData): Promise<{ mess
             <td style="padding: 8px; border: 1px solid #e5e7eb; font-weight: bold;">User Agent</td>
             <td style="padding: 8px; border: 1px solid #e5e7eb; font-size: 11px; font-family: monospace; word-break: break-all;">${data.telemetry.userAgent}</td>
           </tr>
+          ${data.telemetry.fingerprint ? `
+          <tr>
+            <td style="padding: 8px; border: 1px solid #e5e7eb; font-weight: bold;">Browser Fingerprint ID</td>
+            <td style="padding: 8px; border: 1px solid #e5e7eb; font-family: monospace;">${data.telemetry.fingerprint.browserFingerprint || 'N/A'}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; border: 1px solid #e5e7eb; font-weight: bold;">Device Environment</td>
+            <td style="padding: 8px; border: 1px solid #e5e7eb; font-size: 12px;">
+              <strong>Resolution:</strong> ${data.telemetry.fingerprint.screenResolution || 'N/A'}<br/>
+              <strong>Language:</strong> ${data.telemetry.fingerprint.language || 'N/A'}<br/>
+              <strong>Timezone:</strong> ${data.telemetry.fingerprint.timezone || 'N/A'}
+            </td>
+          </tr>
+          ` : ''}
         </table>
 
         <p style="margin-top: 25px; font-size: 12px; color: #9ca3af; text-align: center;">

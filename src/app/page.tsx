@@ -132,6 +132,33 @@ export default function Home() {
     }
   };
 
+  // Helper function to get fingerprint
+  const getFingerprint = async () => {
+    let visitorId = "unknown";
+    try {
+      const fp = await import("@fingerprintjs/fingerprintjs");
+      const fpInstance = await fp.load();
+      const result = await fpInstance.get();
+      visitorId = result.visitorId;
+    } catch (e) {
+      console.error("Failed to generate fingerprint:", e);
+    }
+
+    return {
+      browserFingerprint: visitorId,
+      screenResolution:
+        typeof window !== "undefined"
+          ? `${window.screen.width}x${window.screen.height}`
+          : "unknown",
+      language:
+        typeof navigator !== "undefined" ? navigator.language : "unknown",
+      timezone:
+        typeof Intl !== "undefined"
+          ? Intl.DateTimeFormat().resolvedOptions().timeZone
+          : "unknown",
+    };
+  };
+
   // Submit document analysis
   const handleAnalyzeResume = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -154,6 +181,9 @@ export default function Home() {
     if (jobDescription.trim()) {
       formData.append("jobDescription", jobDescription);
     }
+
+    const fingerprint = await getFingerprint();
+    formData.append("fingerprint", JSON.stringify(fingerprint));
 
     try {
       const res = await fetch("/api/process-document", {
@@ -209,18 +239,7 @@ export default function Home() {
     setFeedbackStatus(null);
 
     // Collect client-side systemic details as fingerprint
-    const fingerprint = {
-      screenResolution:
-        typeof window !== "undefined"
-          ? `${window.screen.width}x${window.screen.height}`
-          : "unknown",
-      language:
-        typeof navigator !== "undefined" ? navigator.language : "unknown",
-      timezone:
-        typeof Intl !== "undefined"
-          ? Intl.DateTimeFormat().resolvedOptions().timeZone
-          : "unknown",
-    };
+    const fingerprint = await getFingerprint();
 
     try {
       const res = await fetch("/api/feedback", {

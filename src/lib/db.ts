@@ -87,3 +87,26 @@ const FeedbackSchema = new mongoose.Schema({
 
 // Prevent model duplication in development
 export const Feedback = mongoose.models.Feedback || mongoose.model("Feedback", FeedbackSchema);
+
+const RateLimitSchema = new mongoose.Schema({
+  uniqueId: {
+    type: String,
+    required: true,
+    unique: true,
+    index: true,
+  },
+  tries: {
+    type: Number,
+    default: 0,
+  },
+  limitReachedAt: {
+    type: Date,
+    default: null,
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
+export const RateLimit = mongoose.models.RateLimit || mongoose.model("RateLimit", RateLimitSchema);
