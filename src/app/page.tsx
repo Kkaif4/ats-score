@@ -1552,14 +1552,15 @@ export default function Home() {
                     "priceCurrency": "USD",
                     "category": "Free"
                   },
-                  "description": "Evaluate resume performance against Applicant Tracking Systems using Gemini AI. Get instant keyword matching, missing skills analysis, and structural recommendations."
+                  "description": "Evaluate your resume matching score for free using Gemini AI. Get a free resume analysis with instant keyword matching, missing skills, and optimization recommendations."
                 },
                 {
                   "@type": "WebSite",
                   "@id": "https://ats-score-gamma.vercel.app/#website",
                   "url": "https://ats-score-gamma.vercel.app/",
                   "name": "ATS Resume Scorer",
-                  "description": "Evaluate resume performance against industry-standard parser patterns."
+                  "alternateName": "ATS Scorer",
+                  "description": "Free ATS Resume Scorer and AI resume analyzer. Evaluate resume performance against industry-standard parser patterns."
                 }
               ]
             }),

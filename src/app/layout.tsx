@@ -19,19 +19,26 @@ export const metadata: Metadata = {
     canonical: "https://ats-score-gamma.vercel.app/",
   },
   title: {
-    default: "AI-Powered ATS Resume Scorer & Analyzer",
-    template: "%s | ATS Scorer",
+    default: "Free ATS Resume Scorer - AI Resume Analyzer & Scanner",
+    template: "%s | ATS Resume Scorer",
   },
   description:
-    "Evaluate your resume matching score using Gemini AI. Get instant keyword matching, missing skills analysis, and structural recommendations to beat Applicant Tracking Systems.",
+    "Evaluate your resume matching score for free using Gemini AI. Get a free resume analysis with instant keyword matching, missing skills, and optimization recommendations.",
+  applicationName: "ATS Resume Scorer",
+  appleWebApp: {
+    title: "ATS Resume Scorer",
+    statusBarStyle: "default",
+    capable: true,
+  },
   keywords: [
-    "ATS resume checker",
-    "resume score",
+    "free ATS resume checker",
+    "free resume score",
     "AI resume analyzer",
-    "Gemini AI",
+    "free resume analysis",
+    "Gemini AI resume scanner",
     "job description match",
     "ATS optimization",
-    "resume parsing",
+    "free resume check",
   ],
   authors: [{ name: "Mohammad Kaif Shaikh" }],
   creator: "Mohammad Kaif Shaikh",
@@ -39,9 +46,9 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: "https://ats-score-gamma.vercel.app/",
-    title: "AI-Powered ATS Resume Scorer & Analyzer",
+    title: "Free ATS Resume Scorer - AI Resume Analyzer",
     description:
-      "Evaluate your resume matching score using Gemini AI. Get instant keyword matching, missing skills analysis, and structural recommendations to beat Applicant Tracking Systems.",
+      "Evaluate your resume matching score for free using Gemini AI. Get a free resume analysis with instant keyword matching, missing skills, and optimization recommendations.",
     siteName: "ATS Resume Scorer",
     images: [
       {
@@ -54,9 +61,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "AI-Powered ATS Resume Scorer & Analyzer",
+    title: "Free ATS Resume Scorer - AI Resume Analyzer",
     description:
-      "Evaluate your resume matching score using Gemini AI. Get instant keyword matching and structural recommendations.",
+      "Evaluate your resume matching score for free using Gemini AI. Get a free resume analysis with instant keyword matching, missing skills, and optimization recommendations.",
     images: ["/ats-scorer-image.png"],
   },
   robots: {
