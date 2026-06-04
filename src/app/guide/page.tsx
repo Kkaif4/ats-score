@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { Metadata } from "next";
+import { Check, X, FileText, Layout, Target, Zap, Sparkles } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Guide & FAQ - ATS Resume Score Calculator",
@@ -97,7 +98,7 @@ export default function GuidePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="glass-panel p-6 rounded-2xl border border-gray-800/80">
               <h3 className="text-lg font-semibold text-blue-400 mb-3 flex items-center gap-2">
-                <span className="p-1.5 rounded-lg bg-blue-500/10 text-blue-400">📝</span>
+                <span className="p-1.5 rounded-lg bg-blue-500/10 text-blue-400"><FileText className="w-4 h-4" /></span>
                 Keywords to Use
               </h3>
               <p className="text-sm text-gray-400 leading-relaxed">
@@ -107,7 +108,7 @@ export default function GuidePage() {
 
             <div className="glass-panel p-6 rounded-2xl border border-gray-800/80">
               <h3 className="text-lg font-semibold text-purple-400 mb-3 flex items-center gap-2">
-                <span className="p-1.5 rounded-lg bg-purple-500/10 text-purple-400">📐</span>
+                <span className="p-1.5 rounded-lg bg-purple-500/10 text-purple-400"><Layout className="w-4 h-4" /></span>
                 Formatting & Layout
               </h3>
               <p className="text-sm text-gray-400 leading-relaxed">
@@ -117,7 +118,7 @@ export default function GuidePage() {
 
             <div className="glass-panel p-6 rounded-2xl border border-gray-800/80">
               <h3 className="text-lg font-semibold text-emerald-400 mb-3 flex items-center gap-2">
-                <span className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400">🎯</span>
+                <span className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400"><Target className="w-4 h-4" /></span>
                 Content Optimizations
               </h3>
               <p className="text-sm text-gray-400 leading-relaxed">
@@ -127,7 +128,7 @@ export default function GuidePage() {
 
             <div className="glass-panel p-6 rounded-2xl border border-gray-800/80">
               <h3 className="text-lg font-semibold text-pink-400 mb-3 flex items-center gap-2">
-                <span className="p-1.5 rounded-lg bg-pink-500/10 text-pink-400">⚡</span>
+                <span className="p-1.5 rounded-lg bg-pink-500/10 text-pink-400"><Zap className="w-4 h-4" /></span>
                 How to Perform ATS Optimization
               </h3>
               <p className="text-sm text-gray-400 leading-relaxed">
@@ -142,32 +143,102 @@ export default function GuidePage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm text-gray-400 border-collapse">
                 <thead>
-                  <tr className="border-b border-gray-800 text-white font-semibold">
+                  <tr className="border-b border-gray-850 text-white font-semibold">
                     <th className="py-3 px-4">Feature</th>
-                    <th className="py-3 px-4">Our ATS Calculator</th>
-                    <th className="py-3 px-4">Other Paid Tools</th>
+                    <th className="py-3 px-4 text-blue-400">Our ATS Checker</th>
+                    <th className="py-3 px-4">Other Tools</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="border-b border-gray-800/60">
-                    <td className="py-3 px-4 font-medium text-gray-200">Cost</td>
-                    <td className="py-3 px-4 text-emerald-400 font-semibold">100% Free</td>
-                    <td className="py-3 px-4">Freemium (Paywalls)</td>
+                  <tr className="border-b border-gray-800/40">
+                    <td className="py-3 px-4 font-medium text-gray-200">ATS Compatibility Check</td>
+                    <td className="py-3 px-4 text-emerald-400 font-semibold">
+                      <span className="inline-flex items-center gap-1.5"><Check className="w-4 h-4 text-emerald-400 shrink-0" /> Full Structural Scan</span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="inline-flex items-center gap-1.5 text-gray-400"><Check className="w-4 h-4 text-gray-400 shrink-0" /> Basic text parsing only</span>
+                    </td>
                   </tr>
-                  <tr className="border-b border-gray-800/60">
-                    <td className="py-3 px-4 font-medium text-gray-200">Analysis Limit</td>
-                    <td className="py-3 px-4 text-emerald-400 font-semibold">Unlimited Scans</td>
-                    <td className="py-3 px-4">1-2 scans free per month</td>
+                  <tr className="border-b border-gray-800/40">
+                    <td className="py-3 px-4 font-medium text-gray-200">Real-time Analysis</td>
+                    <td className="py-3 px-4 text-emerald-400 font-semibold">
+                      <span className="inline-flex items-center gap-1.5"><Check className="w-4 h-4 text-emerald-400 shrink-0" /> Instant in seconds</span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="inline-flex items-center gap-1.5 text-gray-500"><X className="w-4 h-4 text-red-500 shrink-0" /> Queued / delayed reports</span>
+                    </td>
                   </tr>
-                  <tr className="border-b border-gray-800/60">
-                    <td className="py-3 px-4 font-medium text-gray-200">Gemini AI Model</td>
-                    <td className="py-3 px-4 text-emerald-400 font-semibold">Yes (Real-time)</td>
-                    <td className="py-3 px-4">Static Keyword Matching</td>
+                  <tr className="border-b border-gray-800/40">
+                    <td className="py-3 px-4 font-medium text-gray-200">Detailed Score Breakdown</td>
+                    <td className="py-3 px-4 text-emerald-400 font-semibold">
+                      <span className="inline-flex items-center gap-1.5"><Check className="w-4 h-4 text-emerald-400 shrink-0" /> 7+ Category metrics</span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="inline-flex items-center gap-1.5 text-gray-500"><X className="w-4 h-4 text-red-500 shrink-0" /> Single generic percentage</span>
+                    </td>
                   </tr>
-                  <tr>
-                    <td className="py-3 px-4 font-medium text-gray-200">Anonymous Upload</td>
-                    <td className="py-3 px-4 text-emerald-400 font-semibold">Yes (No Login Required)</td>
-                    <td className="py-3 px-4">Requires signup / email</td>
+                  <tr className="border-b border-gray-800/40">
+                    <td className="py-3 px-4 font-medium text-gray-200">Job Description Matching</td>
+                    <td className="py-3 px-4 text-emerald-400 font-semibold">
+                      <span className="inline-flex items-center gap-1.5"><Check className="w-4 h-4 text-emerald-400 shrink-0" /> Direct comparison</span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="inline-flex items-center gap-1.5 text-gray-500"><X className="w-4 h-4 text-red-500 shrink-0" /> Simple keyword counting</span>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-gray-800/40">
+                    <td className="py-3 px-4 font-medium text-gray-200">Keyword Optimization</td>
+                    <td className="py-3 px-4 text-emerald-400 font-semibold">
+                      <span className="inline-flex items-center gap-1.5"><Check className="w-4 h-4 text-emerald-400 shrink-0" /> Specific term suggestions</span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="inline-flex items-center gap-1.5 text-gray-500"><X className="w-4 h-4 text-red-500 shrink-0" /> Limited list or upsells</span>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-gray-800/40">
+                    <td className="py-3 px-4 font-medium text-gray-200">Grammar & Spelling Check</td>
+                    <td className="py-3 px-4 text-emerald-400 font-semibold">
+                      <span className="inline-flex items-center gap-1.5"><Check className="w-4 h-4 text-emerald-400 shrink-0" /> Complete vocabulary audit</span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="inline-flex items-center gap-1.5 text-gray-500"><X className="w-4 h-4 text-red-500 shrink-0" /> Often behind premium paywalls</span>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-gray-800/40">
+                    <td className="py-3 px-4 font-medium text-gray-200">Style Recommendations</td>
+                    <td className="py-3 px-4 text-emerald-400 font-semibold">
+                      <span className="inline-flex items-center gap-1.5"><Check className="w-4 h-4 text-emerald-400 shrink-0" /> Action verb & readability tips</span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="inline-flex items-center gap-1.5 text-gray-500"><X className="w-4 h-4 text-red-500 shrink-0" /> Requires template purchases</span>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-gray-800/40">
+                    <td className="py-3 px-4 font-medium text-gray-200">Privacy Guaranteed</td>
+                    <td className="py-3 px-4 text-emerald-400 font-semibold">
+                      <span className="inline-flex items-center gap-1.5"><Check className="w-4 h-4 text-emerald-400 shrink-0" /> In-memory only (no logs saved)</span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="inline-flex items-center gap-1.5 text-gray-500"><X className="w-4 h-4 text-red-500 shrink-0" /> Resumes stored/sold for ads</span>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-gray-800/40">
+                    <td className="py-3 px-4 font-medium text-gray-200">Unlimited Uploads</td>
+                    <td className="py-3 px-4 text-emerald-400 font-semibold">
+                      <span className="inline-flex items-center gap-1.5"><Check className="w-4 h-4 text-emerald-400 shrink-0" /> 100% Free & Unlimited</span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="inline-flex items-center gap-1.5 text-gray-500"><X className="w-4 h-4 text-red-500 shrink-0" /> 1-2 scans, then paid plan</span>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-gray-800/40">
+                    <td className="py-3 px-4 font-medium text-gray-200">No Registration Required</td>
+                    <td className="py-3 px-4 text-emerald-400 font-semibold">
+                      <span className="inline-flex items-center gap-1.5"><Check className="w-4 h-4 text-emerald-400 shrink-0" /> 100% Anonymous Uploads</span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="inline-flex items-center gap-1.5 text-gray-500"><X className="w-4 h-4 text-red-500 shrink-0" /> Forces email signup to view score</span>
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -175,7 +246,7 @@ export default function GuidePage() {
             
             <div className="bg-blue-500/10 border border-blue-500/20 p-4 rounded-xl text-center">
               <p className="text-sm text-blue-300">
-                🚀 <strong>Our Guarantee:</strong> Free, anonymous, and unlimited resume scanning. Get access to detailed category metrics, action verb recommendations, and skill checklists instantly!
+                <Sparkles className="w-4 h-4 text-blue-400 inline-block align-middle mr-1" /> <strong>Our Guarantee:</strong> Free, anonymous, and unlimited resume scanning. Get access to detailed category metrics, action verb recommendations, and skill checklists instantly!
               </p>
             </div>
           </div>
