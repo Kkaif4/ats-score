@@ -29,19 +29,19 @@ export const metadata: Metadata = {
     "ATS optimization",
     "resume parsing",
   ],
-  authors: [{ name: "ATS Scorer Team" }],
-  creator: "ATS Scorer",
+  authors: [{ name: "Mohammad Kaif Shaikh" }],
+  creator: "Mohammad Kaif Shaikh",
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://ats-score-gamma.vercel.app/", // Assuming this based on common Next.js deployments, adjust if needed
+    url: "https://ats-score-gamma.vercel.app/",
     title: "AI-Powered ATS Resume Scorer & Analyzer",
     description:
       "Evaluate your resume matching score using Gemini AI. Get instant keyword matching, missing skills analysis, and structural recommendations to beat Applicant Tracking Systems.",
     siteName: "ATS Resume Scorer",
     images: [
       {
-        url: "/og-image.jpg", // You can add an actual image to the public folder later
+        url: "/ats-scorer-image.png",
         width: 1200,
         height: 630,
         alt: "ATS Resume Scorer Dashboard Preview",
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
     title: "AI-Powered ATS Resume Scorer & Analyzer",
     description:
       "Evaluate your resume matching score using Gemini AI. Get instant keyword matching and structural recommendations.",
-    images: ["/og-image.jpg"],
+    images: ["/ats-scorer-image.png"],
   },
   robots: {
     index: true,

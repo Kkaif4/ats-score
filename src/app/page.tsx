@@ -302,7 +302,16 @@ export default function Home() {
     GAUGE_CIRCUMFERENCE - (score / 100) * GAUGE_CIRCUMFERENCE;
 
   return (
-    <div className="flex-1 w-full max-w-7xl mx-auto px-4 py-8 sm:py-12 md:py-20 flex flex-col gap-8 md:gap-12">
+    <div 
+      className="min-h-screen w-full flex flex-col"
+      style={{
+        backgroundImage: 'linear-gradient(rgba(8, 11, 17, 0.85), rgba(8, 11, 17, 0.95)), url(/bg-image.webp)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundAttachment: 'fixed'
+      }}
+    >
+      <div className="flex-1 w-full max-w-7xl mx-auto px-4 py-8 sm:py-12 md:py-20 flex flex-col gap-8 md:gap-12 relative z-10">
       {/* Brand Header */}
       <header className="text-center flex flex-col items-center gap-3 md:gap-4">
         <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold tracking-tight">
@@ -1073,6 +1082,7 @@ export default function Home() {
           }),
         }}
       />
+    </div>
     </div>
   );
 }

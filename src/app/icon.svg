@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+    </linearGradient>
+    <filter id="drop-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000000" flood-opacity="0.3" />
+    </filter>
+  </defs>
+  
+  <!-- Document Base with gradient and shadow -->
+  <rect x="25" y="15" width="50" height="70" rx="6" fill="url(#grad)" filter="url(#drop-shadow)" />
+  
+  <!-- Folded Corner Effect -->
+  <polygon points="75,15 75,30 60,15" fill="#1e3a8a" opacity="0.8" />
+  
+  <!-- Document Lines -->
+  <rect x="35" y="38" width="30" height="4" rx="2" fill="#ffffff" opacity="0.9" />
+  <rect x="35" y="50" width="20" height="4" rx="2" fill="#ffffff" opacity="0.9" />
+  <rect x="35" y="62" width="25" height="4" rx="2" fill="#ffffff" opacity="0.9" />
+  
+  <!-- A+ Score Badge -->
+  <circle cx="75" cy="75" r="18" fill="#10b981" filter="url(#drop-shadow)" />
+  <text x="75" y="80.5" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="14" fill="#ffffff" text-anchor="middle">A+</text>
+</svg>
