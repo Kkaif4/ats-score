@@ -170,3 +170,30 @@ body {
   animation: loadingBar 2s infinite linear;
 }
 
+@keyframes scanLaser {
+  0% { top: -10%; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: 110%; opacity: 0; }
+}
+.animate-scan-laser {
+  animation: scanLaser 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes floatParticle {
+  0% { transform: translateY(0) scale(1); opacity: 0; }
+  50% { opacity: 0.8; transform: translateY(-20px) scale(1.2); }
+  100% { transform: translateY(-40px) scale(0.8); opacity: 0; }
+}
+.animate-float-particle {
+  animation: floatParticle 3s ease-in-out infinite;
+}
+
+@keyframes pulseData {
+  0% { opacity: 0.2; transform: scale(0.95); }
+  50% { opacity: 0.8; transform: scale(1.05); }
+  100% { opacity: 0.2; transform: scale(0.95); }
+}
+.animate-pulse-data {
+  animation: pulseData 1.5s ease-in-out infinite;
+}

@@ -110,3 +110,40 @@ const RateLimitSchema = new mongoose.Schema({
 });
 
 export const RateLimit = mongoose.models.RateLimit || mongoose.model("RateLimit", RateLimitSchema);
+
+// Resume Report Schema — stores file binary (base64), metadata, and full ATS analysis
+const ResumeReportSchema = new mongoose.Schema({
+  fingerprintId: { type: String, required: true, index: true },
+  ipAddress: { type: String, required: true },
+  atsScore: { type: Number, required: true },
+
+  // File Storage — binary stored as base64 string directly in MongoDB
+  fileMeta: {
+    originalName: { type: String, required: true },
+    mimeType: { type: String, required: true },
+    sizeInBytes: { type: Number },
+    fileBase64: { type: String, required: true },
+  },
+
+  // Full analysis results for instant retrieval
+  insights: {
+    summary: { type: String },
+    missingKeywords: [String],
+    matchingKeywords: [String],
+    recommendations: [String],
+    sectionScores: {
+      keywordMatch: Number,
+      experienceQuality: Number,
+      structure: Number,
+      skills: Number,
+      formatting: Number,
+      education: Number,
+      contactInfo: Number,
+    },
+  },
+}, { timestamps: true });
+
+// Efficient lookup: find all reports for a user, newest first
+ResumeReportSchema.index({ fingerprintId: 1, createdAt: -1 });
+
+export const ResumeReport = mongoose.models.ResumeReport || mongoose.model("ResumeReport", ResumeReportSchema);

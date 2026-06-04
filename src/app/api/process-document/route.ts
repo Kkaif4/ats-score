@@ -3,6 +3,7 @@ import { processDocument } from "@/lib/gemini";
 import { verifyCaptcha } from "@/lib/security";
 import { connectDB, RateLimit } from "@/lib/db";
 import crypto from "crypto";
+import { LIMIT_THRESHOLD, RESET_HOURS } from "@/app/api/common";
 
 export const dynamic = "force-dynamic";
 
@@ -86,15 +87,13 @@ export async function POST(request: NextRequest) {
     // Connect to DB and check rate limit
     await connectDB();
     const rateLimitRecord = await RateLimit.findOne({ uniqueId });
-    const LIMIT_THRESHOLD = 1;
-    const RESET_HOURS = 5;
 
     if (rateLimitRecord) {
       if (rateLimitRecord.tries >= LIMIT_THRESHOLD) {
         // Check if reset period has passed
         const now = new Date();
         const limitReachedAt = rateLimitRecord.limitReachedAt || now;
-        
+
         // If the timestamp was missing (e.g. threshold changed or first block), save it so the timer ticks down
         if (!rateLimitRecord.limitReachedAt) {
           rateLimitRecord.limitReachedAt = limitReachedAt;
@@ -109,10 +108,9 @@ export async function POST(request: NextRequest) {
           const resetAt = new Date(
             limitReachedAt.getTime() + RESET_HOURS * 3600000,
           );
-          const remainingTime = (RESET_HOURS - hoursSinceLimit).toFixed(1);
           return NextResponse.json(
             {
-              error: `Limit Reached. Please try again in ${remainingTime} hours.`,
+              error: `Limit Reached. Please try again !`,
               resetAt: resetAt.toISOString(),
             },
             { status: 429 },

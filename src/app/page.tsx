@@ -47,6 +47,11 @@ export default function Home() {
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // File Preview States
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [docxHtml, setDocxHtml] = useState<string | null>(null);
+  const [previewType, setPreviewType] = useState<"pdf" | "docx" | null>(null);
+
   // Feedback Form States
   const [showFeedback, setShowFeedback] = useState(false);
   const [feedbackName, setFeedbackName] = useState("");
@@ -59,6 +64,43 @@ export default function Home() {
     message: string;
   } | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Loading Screen States
+  const [loadingStep, setLoadingStep] = useState(0);
+  const loadingSteps = [
+    "Extracting document text...",
+    "Analyzing skills & keywords...",
+    "Evaluating against job requirements...",
+    "Structuring feedback & recommendations...",
+    "Generating final ATS score...",
+  ];
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isProcessing) {
+      setLoadingStep(0);
+      interval = setInterval(() => {
+        setLoadingStep((prev) =>
+          prev < loadingSteps.length - 1 ? prev + 1 : prev,
+        );
+      }, 2000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isProcessing]);
+
+  // Scroll Lock Effect during processing
+  useEffect(() => {
+    if (isProcessing) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [isProcessing]);
 
   // Timer Effect
   useEffect(() => {
@@ -94,6 +136,13 @@ export default function Home() {
       setToastMessage(null);
     }, 4000);
   };
+
+  // Cleanup blob URLs on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
 
   // Widget reset refs
   const docTurnstileRef = useRef<any>(null);
@@ -143,6 +192,39 @@ export default function Home() {
     }
 
     setFile(selectedFile);
+
+    // Generate preview — revoke previous blob URL to prevent memory leaks
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setDocxHtml(null);
+
+    if (selectedFile.type === "application/pdf") {
+      setPreviewType("pdf");
+      setPreviewUrl(URL.createObjectURL(selectedFile));
+    } else {
+      // DOCX — convert to HTML client-side using mammoth
+      setPreviewType("docx");
+      setPreviewUrl(null);
+      selectedFile.arrayBuffer().then((buffer) => {
+        import("mammoth").then((mammoth) => {
+          mammoth.convertToHtml({ arrayBuffer: buffer }).then((result: any) => {
+            setDocxHtml(result.value);
+          });
+        });
+      });
+    }
+  };
+
+  const handleRemoveFile = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setFile(null);
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+    setDocxHtml(null);
+    setPreviewType(null);
+    setDocError("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -232,8 +314,7 @@ export default function Home() {
 
       setAnalysisResult(data.analysis);
 
-      // Reset file and token after successful run
-      setFile(null);
+      // Reset token after successful run (keep file + preview visible with results)
       setDocCaptchaToken("");
       if (docTurnstileRef.current) {
         docTurnstileRef.current.reset();
@@ -345,7 +426,14 @@ export default function Home() {
         backgroundAttachment: "fixed",
       }}
     >
-      <div className="flex-1 w-full max-w-7xl mx-auto px-4 py-8 sm:py-12 md:py-20 flex flex-col gap-8 md:gap-12 relative z-10">
+      <div
+        className={`flex-1 w-full mx-auto px-4 py-8 sm:py-12 md:py-20 flex flex-col gap-8 md:gap-12 relative z-10 ${
+          (previewType === "pdf" && previewUrl) ||
+          (previewType === "docx" && docxHtml)
+            ? "max-w-full px-6 lg:px-10"
+            : "max-w-7xl"
+        }`}
+      >
         {/* Brand Header */}
         <header className="text-center flex flex-col items-center gap-3 md:gap-4">
           <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold tracking-tight">
@@ -359,92 +447,58 @@ export default function Home() {
 
         {/* Main Grid Section */}
         <main className="w-full">
-          {/* Left Side: Document Uploader and Scorer Results */}
-          <section className="w-full max-w-4xl mx-auto flex flex-col gap-6 md:gap-8">
-            <div className="glass-panel rounded-2xl p-4 sm:p-6 md:p-8">
-              <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-4 flex items-center gap-2">
-                <svg
-                  className="w-5 h-5 text-blue-400 shrink-0"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                  />
-                </svg>
-                Upload Document
-              </h2>
+          <div
+            className={`w-full mx-auto ${
+              (previewType === "pdf" && previewUrl) ||
+              (previewType === "docx" && docxHtml)
+                ? "grid grid-cols-1 lg:grid-cols-[3fr_3fr] gap-6 md:gap-8 items-start"
+                : "max-w-4xl"
+            }`}
+          >
+            {/* Left Side: Document Uploader and Scorer Results */}
+            <section className="w-full flex flex-col gap-6 md:gap-8 order-2 lg:order-1">
+              <div className="glass-panel rounded-2xl p-4 sm:p-6 md:p-8">
+                <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-4 flex items-center gap-2">
+                  <svg
+                    className="w-5 h-5 text-blue-400 shrink-0"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                    />
+                  </svg>
+                  Upload Document
+                </h2>
 
-              <form
-                onSubmit={handleAnalyzeResume}
-                className="flex flex-col gap-5 md:gap-6"
-              >
-                {/* Drag and drop zone */}
-                <div
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
-                  onClick={() => fileInputRef.current?.click()}
-                  className={`border-2 border-dashed border-gray-700 hover:border-gray-500 rounded-xl p-6 sm:p-8 text-center cursor-pointer transition-all flex flex-col items-center gap-3 bg-gray-800/10 ${
-                    isDragOver ? "drag-over" : ""
-                  }`}
+                <form
+                  onSubmit={handleAnalyzeResume}
+                  className="flex flex-col gap-5 md:gap-6"
                 >
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    accept=".pdf,.docx"
-                    className="hidden"
-                  />
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-800 flex items-center justify-center border border-gray-700">
-                    <svg
-                      className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                      />
-                    </svg>
-                  </div>
-                  {file ? (
-                    <div className="flex flex-col items-center">
-                      <p className="text-sm font-semibold text-blue-400 break-all px-2">
-                        {file.name}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {(file.size / 1024 / 1024).toFixed(2)} MB
-                      </p>
-                    </div>
-                  ) : (
-                    <div>
-                      <p className="text-sm font-medium px-2">
-                        Drag & drop files here or click to browse
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Supports PDF or DOCX format up to 5MB
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Job Description (Optional) */}
-                <div className="flex flex-col gap-2">
-                  <div className="flex justify-between items-center">
-                    <label
-                      htmlFor="jd-input"
-                      className="text-sm font-semibold text-gray-300 flex items-center gap-1.5"
-                    >
+                  {/* Drag and drop zone */}
+                  <div
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`border-2 border-dashed border-gray-700 hover:border-gray-500 rounded-xl p-6 sm:p-8 text-center cursor-pointer transition-all flex flex-col items-center gap-3 bg-gray-800/10 ${
+                      isDragOver ? "drag-over" : ""
+                    }`}
+                  >
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      accept=".pdf,.docx"
+                      className="hidden"
+                    />
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-800 flex items-center justify-center border border-gray-700">
                       <svg
-                        className="w-4 h-4 text-blue-400 shrink-0"
+                        className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -456,178 +510,76 @@ export default function Home() {
                           d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                         />
                       </svg>
-                      Job Description
-                    </label>
-                    <span className="text-[10px] sm:text-xs text-gray-500 font-medium bg-gray-800/40 px-2 py-0.5 rounded border border-gray-800">
-                      Optional
-                    </span>
-                  </div>
-                  <textarea
-                    id="jd-input"
-                    rows={4}
-                    value={jobDescription}
-                    onChange={(e) => setJobDescription(e.target.value)}
-                    placeholder="Paste the target job description here to evaluate resume matching..."
-                    className="w-full bg-gray-900/30 border border-gray-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-xl px-4 py-3 text-sm placeholder-gray-600 focus:outline-none transition-all resize-y min-h-[100px] text-white"
-                  />
-                </div>
-
-                {/* Document error reporting */}
-                {(docError || timeRemaining) && (
-                  <div className="bg-red-900/20 border border-red-900/40 px-4 py-3 rounded-lg text-red-400 text-sm flex items-start gap-2">
-                    <svg
-                      className="w-4 h-4 mt-0.5 shrink-0"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                      />
-                    </svg>
-                    <div className="flex flex-col">
-                      <span>{docError}</span>
-                      {timeRemaining && (
-                        <span className="font-mono text-xs bg-red-950/50 px-2 py-1 rounded inline-block w-fit mt-1.5 border border-red-900/30">
-                          Resets in:{" "}
-                          <span className="font-bold text-red-300">
-                            {timeRemaining}
-                          </span>
-                        </span>
-                      )}
                     </div>
-                  </div>
-                )}
-
-                {/* CAPTCHA validation and submit row */}
-                <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-gray-900/20 p-3 sm:p-4 rounded-xl border border-gray-800 w-full overflow-hidden">
-                  <div className="min-h-[65px] w-full md:w-auto flex items-center justify-center py-1">
-                    {isMounted ? (
-                      <div className="w-full flex justify-center scale-90 min-[375px]:scale-95 sm:scale-100 origin-center transition-transform">
-                        <Turnstile
-                          ref={docTurnstileRef}
-                          siteKey={TURNSTILE_SITE_KEY}
-                          onSuccess={(token) => setDocCaptchaToken(token)}
-                          onError={() => setDocCaptchaToken("")}
-                          onExpire={() => setDocCaptchaToken("")}
-                          options={{ size: "flexible" }}
-                        />
+                    {file ? (
+                      <div className="flex flex-col items-center">
+                        <p className="text-sm font-semibold text-blue-400 break-all px-2">
+                          {file.name}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {(file.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                        <button
+                          type="button"
+                          onClick={handleRemoveFile}
+                          className="mt-3 px-4 py-1.5 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-full text-xs font-medium transition-colors"
+                        >
+                          Remove Document
+                        </button>
                       </div>
                     ) : (
-                      <div className="h-[65px] flex items-center justify-center text-gray-500 text-xs">
-                        Loading verification...
+                      <div>
+                        <p className="text-sm font-medium px-2">
+                          Drag & drop files here or click to browse
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Supports PDF or DOCX format up to 5MB
+                        </p>
                       </div>
                     )}
                   </div>
 
-                  <button
-                    type="submit"
-                    disabled={
-                      !isMounted || isProcessing || !file || !docCaptchaToken
-                    }
-                    className="btn-primary px-8 py-3 rounded-xl font-bold text-white tracking-wide transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shrink-0 w-full md:w-auto"
-                  >
-                    {isProcessing ? (
-                      <span className="flex items-center justify-center gap-2">
+                  {/* Job Description (Optional) */}
+                  <div className="flex flex-col gap-2">
+                    <div className="flex justify-between items-center">
+                      <label
+                        htmlFor="jd-input"
+                        className="text-sm font-semibold text-gray-300 flex items-center gap-1.5"
+                      >
                         <svg
-                          className="animate-spin h-5 w-5 text-white animate-spin-slow"
+                          className="w-4 h-4 text-blue-400 shrink-0"
                           fill="none"
                           viewBox="0 0 24 24"
+                          stroke="currentColor"
                         >
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                          />
                           <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                           />
                         </svg>
-                        Analyzing Resume...
-                      </span>
-                    ) : (
-                      "Analyze Resume"
-                    )}
-                  </button>
-                </div>
-              </form>
-            </div>
-
-            {/* Results dashboard display */}
-            {analysisResult && (
-              <div className="glass-panel rounded-2xl p-4 sm:p-6 md:p-8 animate-fade-in glow-secondary">
-                <div className="flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-8 border-b border-gray-800 pb-4 md:pb-6 mb-4 md:mb-6">
-                  {/* Score gauge visual */}
-                  <div className="relative w-28 h-28 sm:w-36 sm:h-36 flex items-center justify-center shrink-0">
-                    <svg
-                      className="w-full h-full transform -rotate-90"
-                      viewBox="0 0 120 120"
-                    >
-                      {/* Background track circle */}
-                      <circle
-                        cx="60"
-                        cy="60"
-                        r="50"
-                        stroke="rgba(31, 41, 55, 0.5)"
-                        strokeWidth="10"
-                        fill="transparent"
-                      />
-                      {/* Progress indicator circle */}
-                      <circle
-                        cx="60"
-                        cy="60"
-                        r="50"
-                        stroke={
-                          analysisResult.score >= 70
-                            ? "#10b981"
-                            : analysisResult.score >= 50
-                              ? "#f59e0b"
-                              : "#ef4444"
-                        }
-                        strokeWidth="10"
-                        fill="transparent"
-                        strokeDasharray={GAUGE_CIRCUMFERENCE}
-                        strokeDashoffset={getGaugeDashoffset(
-                          analysisResult.score,
-                        )}
-                        strokeLinecap="round"
-                        className="progress-ring__circle transition-all duration-500 ease-out"
-                      />
-                    </svg>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-                        {analysisResult.score}
-                      </span>
-                      <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">
-                        ATS Score
+                        Job Description
+                      </label>
+                      <span className="text-[10px] sm:text-xs text-gray-500 font-medium bg-gray-800/40 px-2 py-0.5 rounded border border-gray-800">
+                        Optional
                       </span>
                     </div>
+                    <textarea
+                      id="jd-input"
+                      rows={4}
+                      value={jobDescription}
+                      onChange={(e) => setJobDescription(e.target.value)}
+                      placeholder="Paste the target job description here to evaluate resume matching..."
+                      className="w-full bg-gray-900/30 border border-gray-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-xl px-4 py-3 text-sm placeholder-gray-600 focus:outline-none transition-all resize-y min-h-[100px] text-white"
+                    />
                   </div>
 
-                  <div className="flex-1 text-center md:text-left">
-                    <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">
-                      Evaluation Summary
-                    </h3>
-                    <p className="text-gray-400 text-xs sm:text-sm leading-relaxed">
-                      {analysisResult.summary}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Section Score Breakdown Bars */}
-                {analysisResult.sectionScores && (
-                  <div className="border-b border-gray-800 pb-4 md:pb-6 mb-4 md:mb-6">
-                    <h4 className="text-xs sm:text-sm font-semibold text-gray-300 mb-4 uppercase tracking-wider flex items-center gap-2">
+                  {/* Document error reporting */}
+                  {(docError || timeRemaining) && (
+                    <div className="bg-red-900/20 border border-red-900/40 px-4 py-3 rounded-lg text-red-400 text-sm flex items-start gap-2">
                       <svg
-                        className="w-4 h-4 text-purple-400"
+                        className="w-4 h-4 mt-0.5 shrink-0"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -636,177 +588,397 @@ export default function Home() {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           strokeWidth={2}
-                          d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
                         />
                       </svg>
-                      Score Breakdown
-                    </h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
-                      {[
-                        {
-                          label: "Keyword Match",
-                          weight: "30%",
-                          value: analysisResult.sectionScores.keywordMatch,
-                        },
-                        {
-                          label: "Experience Quality",
-                          weight: "20%",
-                          value: analysisResult.sectionScores.experienceQuality,
-                        },
-                        {
-                          label: "Resume Structure",
-                          weight: "15%",
-                          value: analysisResult.sectionScores.structure,
-                        },
-                        {
-                          label: "Skills Section",
-                          weight: "10%",
-                          value: analysisResult.sectionScores.skills,
-                        },
-                        {
-                          label: "Formatting",
-                          weight: "10%",
-                          value: analysisResult.sectionScores.formatting,
-                        },
-                        {
-                          label: "Education",
-                          weight: "10%",
-                          value: analysisResult.sectionScores.education,
-                        },
-                        {
-                          label: "Contact Info",
-                          weight: "5%",
-                          value: analysisResult.sectionScores.contactInfo,
-                        },
-                      ].map((factor) => (
-                        <div key={factor.label} className="flex flex-col gap-1">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs text-gray-400">
-                              {factor.label}{" "}
-                              <span className="text-gray-600">
-                                · {factor.weight}
-                              </span>
+                      <div className="flex flex-col">
+                        <span>{docError}</span>
+                        {timeRemaining && (
+                          <span className="font-mono text-xs bg-red-950/50 px-2 py-1 rounded inline-block w-fit mt-1.5 border border-red-900/30">
+                            Resets in:{" "}
+                            <span className="font-bold text-red-300">
+                              {timeRemaining}
                             </span>
-                            <span
-                              className={`text-xs font-bold ${
-                                factor.value >= 70
-                                  ? "text-emerald-400"
-                                  : factor.value >= 50
-                                    ? "text-amber-400"
-                                    : "text-red-400"
-                              }`}
-                            >
-                              {factor.value}
-                            </span>
-                          </div>
-                          <div className="h-1.5 w-full bg-gray-800 rounded-full overflow-hidden">
-                            <div
-                              className={`h-full rounded-full transition-all duration-700 ease-out ${
-                                factor.value >= 70
-                                  ? "bg-gradient-to-r from-emerald-500 to-emerald-400"
-                                  : factor.value >= 50
-                                    ? "bg-gradient-to-r from-amber-500 to-amber-400"
-                                    : "bg-gradient-to-r from-red-500 to-red-400"
-                              }`}
-                              style={{ width: `${factor.value}%` }}
-                            />
-                          </div>
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* CAPTCHA validation and submit row */}
+                  <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-gray-900/20 p-3 sm:p-4 rounded-xl border border-gray-800 w-full overflow-hidden">
+                    <div className="min-h-[65px] w-full md:w-auto flex items-center justify-center py-1">
+                      {isMounted ? (
+                        <div className="w-full flex justify-center scale-90 min-[375px]:scale-95 sm:scale-100 origin-center transition-transform">
+                          <Turnstile
+                            ref={docTurnstileRef}
+                            siteKey={TURNSTILE_SITE_KEY}
+                            onSuccess={(token) => setDocCaptchaToken(token)}
+                            onError={() => setDocCaptchaToken("")}
+                            onExpire={() => setDocCaptchaToken("")}
+                            options={{ size: "flexible" }}
+                          />
                         </div>
-                      ))}
+                      ) : (
+                        <div className="h-[65px] flex items-center justify-center text-gray-500 text-xs">
+                          Loading verification...
+                        </div>
+                      )}
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={
+                        !isMounted || isProcessing || !file || !docCaptchaToken
+                      }
+                      className="btn-primary px-8 py-3 rounded-xl font-bold text-white tracking-wide transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shrink-0 w-full md:w-auto"
+                    >
+                      {isProcessing ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <svg
+                            className="animate-spin h-5 w-5 text-white animate-spin-slow"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            />
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            />
+                          </svg>
+                          Analyzing Resume...
+                        </span>
+                      ) : (
+                        "Analyze Resume"
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              {/* Results dashboard display */}
+              {analysisResult && (
+                <div className="glass-panel rounded-2xl p-4 sm:p-6 md:p-8 animate-fade-in glow-secondary">
+                  <div className="flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-8 border-b border-gray-800 pb-4 md:pb-6 mb-4 md:mb-6">
+                    {/* Score gauge visual */}
+                    <div className="relative w-28 h-28 sm:w-36 sm:h-36 flex items-center justify-center shrink-0">
+                      <svg
+                        className="w-full h-full transform -rotate-90"
+                        viewBox="0 0 120 120"
+                      >
+                        {/* Background track circle */}
+                        <circle
+                          cx="60"
+                          cy="60"
+                          r="50"
+                          stroke="rgba(31, 41, 55, 0.5)"
+                          strokeWidth="10"
+                          fill="transparent"
+                        />
+                        {/* Progress indicator circle */}
+                        <circle
+                          cx="60"
+                          cy="60"
+                          r="50"
+                          stroke={
+                            analysisResult.score >= 70
+                              ? "#10b981"
+                              : analysisResult.score >= 50
+                                ? "#f59e0b"
+                                : "#ef4444"
+                          }
+                          strokeWidth="10"
+                          fill="transparent"
+                          strokeDasharray={GAUGE_CIRCUMFERENCE}
+                          strokeDashoffset={getGaugeDashoffset(
+                            analysisResult.score,
+                          )}
+                          strokeLinecap="round"
+                          className="progress-ring__circle transition-all duration-500 ease-out"
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <span className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                          {analysisResult.score}
+                        </span>
+                        <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">
+                          ATS Score
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex-1 text-center md:text-left">
+                      <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">
+                        Evaluation Summary
+                      </h3>
+                      <p className="text-gray-400 text-xs sm:text-sm leading-relaxed">
+                        {analysisResult.summary}
+                      </p>
                     </div>
                   </div>
-                )}
 
-                {/* Detailed match metrics */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                  {/* Identified Matching skills */}
-                  <div className="bg-gray-800/10 border border-gray-800 p-4 sm:p-5 rounded-xl">
-                    <h4 className="text-xs sm:text-sm font-semibold text-green-400 mb-3 flex items-center gap-1.5 uppercase tracking-wider">
-                      <span className="w-2 h-2 rounded-full bg-green-400 shrink-0"></span>
-                      Matching Keywords
-                    </h4>
-                    {analysisResult.matchingKeywords.length > 0 ? (
-                      <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                        {analysisResult.matchingKeywords.map((tag, idx) => (
-                          <span
-                            key={idx}
-                            className="bg-green-500/10 border border-green-500/20 text-green-400 text-[10px] sm:text-xs px-2.5 py-1 rounded-md font-medium break-words max-w-full"
+                  {/* Section Score Breakdown Bars */}
+                  {analysisResult.sectionScores && (
+                    <div className="border-b border-gray-800 pb-4 md:pb-6 mb-4 md:mb-6">
+                      <h4 className="text-xs sm:text-sm font-semibold text-gray-300 mb-4 uppercase tracking-wider flex items-center gap-2">
+                        <svg
+                          className="w-4 h-4 text-purple-400"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                          />
+                        </svg>
+                        Score Breakdown
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
+                        {[
+                          {
+                            label: "Keyword Match",
+                            weight: "30%",
+                            value: analysisResult.sectionScores.keywordMatch,
+                          },
+                          {
+                            label: "Experience Quality",
+                            weight: "20%",
+                            value:
+                              analysisResult.sectionScores.experienceQuality,
+                          },
+                          {
+                            label: "Resume Structure",
+                            weight: "15%",
+                            value: analysisResult.sectionScores.structure,
+                          },
+                          {
+                            label: "Skills Section",
+                            weight: "10%",
+                            value: analysisResult.sectionScores.skills,
+                          },
+                          {
+                            label: "Formatting",
+                            weight: "10%",
+                            value: analysisResult.sectionScores.formatting,
+                          },
+                          {
+                            label: "Education",
+                            weight: "10%",
+                            value: analysisResult.sectionScores.education,
+                          },
+                          {
+                            label: "Contact Info",
+                            weight: "5%",
+                            value: analysisResult.sectionScores.contactInfo,
+                          },
+                        ].map((factor) => (
+                          <div
+                            key={factor.label}
+                            className="flex flex-col gap-1"
                           >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-xs text-gray-500 italic">
-                        No matching keywords found
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Missing required keywords */}
-                  <div className="bg-gray-800/10 border border-gray-800 p-4 sm:p-5 rounded-xl">
-                    <h4 className="text-xs sm:text-sm font-semibold text-amber-400 mb-3 flex items-center gap-1.5 uppercase tracking-wider">
-                      <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0"></span>
-                      Missing Skills
-                    </h4>
-                    {analysisResult.missingKeywords.length > 0 ? (
-                      <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                        {analysisResult.missingKeywords.map((tag, idx) => (
-                          <span
-                            key={idx}
-                            className="bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] sm:text-xs px-2.5 py-1 rounded-md font-medium break-words max-w-full"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-xs text-gray-500 italic">
-                        No critical missing keywords identified
-                      </p>
-                    )}
-                  </div>
-
-                  {/* ATS Optimization suggestions */}
-                  <div className="md:col-span-2 bg-gray-800/10 border border-gray-800 p-4 sm:p-5 rounded-xl">
-                    <h4 className="text-xs sm:text-sm font-semibold text-blue-400 mb-3 flex items-center gap-1.5 uppercase tracking-wider">
-                      <span className="w-2 h-2 rounded-full bg-blue-400 shrink-0"></span>
-                      Structural Recommendations
-                    </h4>
-                    {analysisResult.recommendations.length > 0 ? (
-                      <ul className="space-y-2 sm:space-y-2.5">
-                        {analysisResult.recommendations.map((step, idx) => (
-                          <li
-                            key={idx}
-                            className="text-xs sm:text-sm text-gray-300 flex items-start gap-2 sm:gap-2.5"
-                          >
-                            <svg
-                              className="w-4 h-4 text-blue-400 shrink-0 mt-0.5"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M9 5l7 7-7 7"
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-gray-400">
+                                {factor.label}{" "}
+                                <span className="text-gray-600">
+                                  · {factor.weight}
+                                </span>
+                              </span>
+                              <span
+                                className={`text-xs font-bold ${
+                                  factor.value >= 70
+                                    ? "text-emerald-400"
+                                    : factor.value >= 50
+                                      ? "text-amber-400"
+                                      : "text-red-400"
+                                }`}
+                              >
+                                {factor.value}
+                              </span>
+                            </div>
+                            <div className="h-1.5 w-full bg-gray-800 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all duration-700 ease-out ${
+                                  factor.value >= 70
+                                    ? "bg-gradient-to-r from-emerald-500 to-emerald-400"
+                                    : factor.value >= 50
+                                      ? "bg-gradient-to-r from-amber-500 to-amber-400"
+                                      : "bg-gradient-to-r from-red-500 to-red-400"
+                                }`}
+                                style={{ width: `${factor.value}%` }}
                               />
-                            </svg>
-                            <span className="break-words">{step}</span>
-                          </li>
+                            </div>
+                          </div>
                         ))}
-                      </ul>
-                    ) : (
-                      <p className="text-xs text-gray-500 italic">
-                        Resume is perfectly formatted and optimization-ready
-                      </p>
-                    )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Detailed match metrics */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                    {/* Identified Matching skills */}
+                    <div className="bg-gray-800/10 border border-gray-800 p-4 sm:p-5 rounded-xl">
+                      <h4 className="text-xs sm:text-sm font-semibold text-green-400 mb-3 flex items-center gap-1.5 uppercase tracking-wider">
+                        <span className="w-2 h-2 rounded-full bg-green-400 shrink-0"></span>
+                        Matching Keywords
+                      </h4>
+                      {analysisResult.matchingKeywords.length > 0 ? (
+                        <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                          {analysisResult.matchingKeywords.map((tag, idx) => (
+                            <span
+                              key={idx}
+                              className="bg-green-500/10 border border-green-500/20 text-green-400 text-[10px] sm:text-xs px-2.5 py-1 rounded-md font-medium break-words max-w-full"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-gray-500 italic">
+                          No matching keywords found
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Missing required keywords */}
+                    <div className="bg-gray-800/10 border border-gray-800 p-4 sm:p-5 rounded-xl">
+                      <h4 className="text-xs sm:text-sm font-semibold text-amber-400 mb-3 flex items-center gap-1.5 uppercase tracking-wider">
+                        <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0"></span>
+                        Missing Skills
+                      </h4>
+                      {analysisResult.missingKeywords.length > 0 ? (
+                        <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                          {analysisResult.missingKeywords.map((tag, idx) => (
+                            <span
+                              key={idx}
+                              className="bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] sm:text-xs px-2.5 py-1 rounded-md font-medium break-words max-w-full"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-gray-500 italic">
+                          No critical missing keywords identified
+                        </p>
+                      )}
+                    </div>
+
+                    {/* ATS Optimization suggestions */}
+                    <div className="md:col-span-2 bg-gray-800/10 border border-gray-800 p-4 sm:p-5 rounded-xl">
+                      <h4 className="text-xs sm:text-sm font-semibold text-blue-400 mb-3 flex items-center gap-1.5 uppercase tracking-wider">
+                        <span className="w-2 h-2 rounded-full bg-blue-400 shrink-0"></span>
+                        Structural Recommendations
+                      </h4>
+                      {analysisResult.recommendations.length > 0 ? (
+                        <ul className="space-y-2 sm:space-y-2.5">
+                          {analysisResult.recommendations.map((step, idx) => (
+                            <li
+                              key={idx}
+                              className="text-xs sm:text-sm text-gray-300 flex items-start gap-2 sm:gap-2.5"
+                            >
+                              <svg
+                                className="w-4 h-4 text-blue-400 shrink-0 mt-0.5"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M9 5l7 7-7 7"
+                                />
+                              </svg>
+                              <span className="break-words">{step}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-xs text-gray-500 italic">
+                          Resume is perfectly formatted and optimization-ready
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </section>
+              )}
+            </section>
+
+            {/* Resume Preview Panel — Right Column (sticky, desktop only) */}
+            {(previewType === "pdf" && previewUrl) ||
+            (previewType === "docx" && docxHtml) ? (
+              <aside
+                className="hidden lg:block w-full order-2 lg:sticky lg:top-6"
+                style={{ alignSelf: "start" }}
+              >
+                <div className="glass-panel rounded-2xl p-4 sm:p-5 animate-fade-in overflow-hidden">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-base sm:text-lg font-bold flex items-center gap-2 text-white">
+                      <svg
+                        className="w-5 h-5 text-cyan-400 shrink-0"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                        />
+                      </svg>
+                      Resume Preview
+                    </h3>
+                    {file && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-400 bg-gray-800/60 px-2.5 py-1 rounded-md border border-gray-700 truncate max-w-[200px]">
+                          {file.name}
+                        </span>
+                        <span className="text-[10px] text-gray-500 bg-gray-800/40 px-2 py-0.5 rounded border border-gray-800">
+                          {(file.size / 1024 / 1024).toFixed(2)} MB
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {previewType === "pdf" && previewUrl ? (
+                    <iframe
+                      src={previewUrl}
+                      className="w-full rounded-lg border border-gray-700 bg-white"
+                      style={{
+                        height: "calc(100vh - 10rem)",
+                        overflow: "hidden",
+                      }}
+                      title="Resume PDF Preview"
+                    />
+                  ) : previewType === "docx" && docxHtml ? (
+                    <div
+                      className="w-full rounded-lg border border-gray-700 bg-white p-6 overflow-y-auto overflow-x-hidden text-gray-900 prose prose-sm max-w-none break-words"
+                      style={{ maxHeight: "calc(100vh - 10rem)" }}
+                      dangerouslySetInnerHTML={{ __html: docxHtml }}
+                    />
+                  ) : null}
+                </div>
+              </aside>
+            ) : null}
+          </div>
         </main>
 
         {/* Dynamic footer/feedback trigger */}
@@ -1026,38 +1198,106 @@ export default function Home() {
 
         {/* Loading Overlay */}
         {isProcessing && (
-          <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/80 backdrop-blur-md animate-fade-in">
-            <div className="flex flex-col items-center gap-6 max-w-sm text-center p-6 animate-scale-up">
-              <div className="relative w-20 h-20">
-                <div className="absolute inset-0 rounded-full border-4 border-blue-500/20 animate-pulse"></div>
-                <div className="absolute inset-0 rounded-full border-4 border-t-blue-500 border-r-purple-500 animate-spin"></div>
-                <div className="absolute inset-4 rounded-full bg-blue-500/10 flex items-center justify-center">
-                  <svg
-                    className="w-6 h-6 text-blue-400 animate-pulse"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                </div>
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-950/80 backdrop-blur-md overflow-hidden">
+            {/* Background floating particles for distraction */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              <div
+                className="absolute top-1/4 left-1/4 w-2 h-2 bg-blue-400 rounded-full animate-float-particle"
+                style={{ animationDelay: "0s" }}
+              ></div>
+              <div
+                className="absolute top-3/4 left-1/3 w-3 h-3 bg-purple-400 rounded-full animate-float-particle"
+                style={{ animationDelay: "1s" }}
+              ></div>
+              <div
+                className="absolute top-1/3 right-1/4 w-2.5 h-2.5 bg-cyan-400 rounded-full animate-float-particle"
+                style={{ animationDelay: "0.5s" }}
+              ></div>
+              <div
+                className="absolute top-2/3 right-1/3 w-2 h-2 bg-indigo-400 rounded-full animate-float-particle"
+                style={{ animationDelay: "1.5s" }}
+              ></div>
+              <div
+                className="absolute top-1/2 right-1/5 w-1.5 h-1.5 bg-blue-300 rounded-full animate-float-particle"
+                style={{ animationDelay: "2s" }}
+              ></div>
+
+              {/* Extra animated bubbles */}
+              <div
+                className="absolute top-[15%] left-[10%] w-3 h-3 bg-fuchsia-400 rounded-full animate-float-particle"
+                style={{ animationDelay: "0.3s" }}
+              ></div>
+              <div
+                className="absolute bottom-[20%] right-[15%] w-2 h-2 bg-teal-400 rounded-full animate-float-particle"
+                style={{ animationDelay: "1.2s" }}
+              ></div>
+              <div
+                className="absolute top-[45%] left-[5%] w-2.5 h-2.5 bg-pink-400 rounded-full animate-float-particle"
+                style={{ animationDelay: "2.5s" }}
+              ></div>
+              <div
+                className="absolute bottom-[35%] left-[45%] w-1.5 h-1.5 bg-cyan-300 rounded-full animate-float-particle"
+                style={{ animationDelay: "0.8s" }}
+              ></div>
+              <div
+                className="absolute top-[40%] right-[40%] w-2 h-2 bg-purple-300 rounded-full animate-float-particle"
+                style={{ animationDelay: "1.8s" }}
+              ></div>
+            </div>
+
+            <div className="glass-panel p-8 sm:p-12 rounded-3xl max-w-md w-full mx-4 text-center flex flex-col items-center gap-6 shadow-2xl relative overflow-hidden border border-gray-800/60">
+              {/* Pulsing background light */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-blue-500/10 blur-[80px] rounded-full animate-pulse-data" />
+
+              {/* Scanning Document Animation Centerpiece */}
+              <div className="relative w-24 h-32 bg-gray-900/60 rounded-xl border border-gray-700/60 p-4 flex flex-col gap-2.5 overflow-hidden shadow-[0_0_30px_rgba(59,130,246,0.15)] z-10">
+                {/* Mock resume lines */}
+                <div className="w-1/2 h-2 bg-gray-500/50 rounded-full mb-1"></div>
+                <div className="w-full h-1.5 bg-gray-600/50 rounded-full"></div>
+                <div className="w-5/6 h-1.5 bg-gray-600/50 rounded-full"></div>
+                <div className="w-full h-1.5 bg-gray-600/50 rounded-full mt-1.5"></div>
+                <div className="w-3/4 h-1.5 bg-gray-600/50 rounded-full"></div>
+                <div className="w-4/5 h-1.5 bg-gray-600/50 rounded-full"></div>
+
+                {/* Laser scanner line */}
+                <div className="absolute left-0 w-full h-[2px] bg-blue-400 shadow-[0_0_12px_3px_rgba(96,165,250,0.8)] animate-scan-laser z-20"></div>
+
+                {/* Corner reticles */}
+                <div className="absolute top-1.5 left-1.5 w-2 h-2 border-t border-l border-blue-500/50 rounded-tl-sm"></div>
+                <div className="absolute top-1.5 right-1.5 w-2 h-2 border-t border-r border-blue-500/50 rounded-tr-sm"></div>
+                <div className="absolute bottom-1.5 left-1.5 w-2 h-2 border-b border-l border-blue-500/50 rounded-bl-sm"></div>
+                <div className="absolute bottom-1.5 right-1.5 w-2 h-2 border-b border-r border-blue-500/50 rounded-br-sm"></div>
               </div>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2 relative h-[60px] justify-center">
                 <h3 className="text-xl font-bold text-white tracking-tight">
                   Analyzing Resume
                 </h3>
-                <p className="text-sm text-gray-400">
-                  Gemini is extracting resume content, checking keywords,
-                  matching with job requirements, and calculating score...
-                </p>
+                <div className="relative h-6 w-full overflow-hidden">
+                  {loadingSteps.map((step, index) => (
+                    <p
+                      key={index}
+                      className={`text-sm text-gray-400 absolute w-full text-center transition-all duration-500 transform ${
+                        index === loadingStep
+                          ? "opacity-100 translate-y-0"
+                          : index < loadingStep
+                            ? "opacity-0 -translate-y-4"
+                            : "opacity-0 translate-y-4"
+                      }`}
+                    >
+                      {step}
+                    </p>
+                  ))}
+                </div>
               </div>
-              <div className="w-48 h-1 bg-gray-800 rounded-full overflow-hidden relative">
-                <div className="h-full bg-gradient-to-r from-blue-500 to-purple-500 animate-loading-bar absolute inset-y-0 left-0 w-full"></div>
+
+              <div className="w-48 h-1.5 bg-gray-800 rounded-full overflow-hidden relative">
+                <div
+                  className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500 ease-out"
+                  style={{
+                    width: `${((loadingStep + 1) / loadingSteps.length) * 100}%`,
+                  }}
+                ></div>
+                <div className="h-full bg-gradient-to-r from-blue-500 to-purple-500 animate-loading-bar absolute inset-y-0 left-0 w-full opacity-30"></div>
               </div>
             </div>
           </div>
