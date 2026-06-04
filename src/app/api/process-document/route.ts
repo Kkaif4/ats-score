@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
     // Connect to DB and check rate limit
     await connectDB();
     const rateLimitRecord = await RateLimit.findOne({ uniqueId });
-    const LIMIT_THRESHOLD = 3;
+    const LIMIT_THRESHOLD = 1;
     const RESET_HOURS = 5;
 
     if (rateLimitRecord) {
@@ -94,15 +94,26 @@ export async function POST(request: NextRequest) {
         // Check if reset period has passed
         const now = new Date();
         const limitReachedAt = rateLimitRecord.limitReachedAt || now;
+        
+        // If the timestamp was missing (e.g. threshold changed or first block), save it so the timer ticks down
+        if (!rateLimitRecord.limitReachedAt) {
+          rateLimitRecord.limitReachedAt = limitReachedAt;
+          await rateLimitRecord.save();
+        }
+
         const hoursSinceLimit =
           Math.abs(now.getTime() - limitReachedAt.getTime()) / 3600000;
 
         if (hoursSinceLimit < RESET_HOURS) {
           // Still within the blocked period
+          const resetAt = new Date(
+            limitReachedAt.getTime() + RESET_HOURS * 3600000,
+          );
           const remainingTime = (RESET_HOURS - hoursSinceLimit).toFixed(1);
           return NextResponse.json(
             {
               error: `Limit Reached. Please try again in ${remainingTime} hours.`,
+              resetAt: resetAt.toISOString(),
             },
             { status: 429 },
           );
@@ -138,7 +149,7 @@ export async function POST(request: NextRequest) {
         await RateLimit.create({
           uniqueId,
           tries: 1,
-          limitReachedAt: null,
+          limitReachedAt: 1 >= LIMIT_THRESHOLD ? now : null,
         });
       }
     }
