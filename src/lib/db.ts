@@ -3,7 +3,9 @@ import mongoose from "mongoose";
 const MONGODB_URI = process.env.MONGOURI || "mongodb://localhost:27017/ats";
 
 if (!MONGODB_URI) {
-  throw new Error("Please define the MONGOURI environment variable inside .env");
+  throw new Error(
+    "Please define the MONGOURI environment variable inside .env",
+  );
 }
 
 interface GlobalMongoose {
@@ -31,9 +33,11 @@ export async function connectDB() {
       bufferCommands: false,
     };
 
-    cached!.promise = mongoose.connect(MONGODB_URI, opts).then((mongooseInstance) => {
-      return mongooseInstance;
-    });
+    cached!.promise = mongoose
+      .connect(MONGODB_URI, opts)
+      .then((mongooseInstance) => {
+        return mongooseInstance;
+      });
   }
 
   try {
@@ -86,7 +90,8 @@ const FeedbackSchema = new mongoose.Schema({
 });
 
 // Prevent model duplication in development
-export const Feedback = mongoose.models.Feedback || mongoose.model("Feedback", FeedbackSchema);
+export const Feedback =
+  mongoose.models.Feedback || mongoose.model("Feedback", FeedbackSchema);
 
 const RateLimitSchema = new mongoose.Schema({
   uniqueId: {
@@ -109,41 +114,52 @@ const RateLimitSchema = new mongoose.Schema({
   },
 });
 
-export const RateLimit = mongoose.models.RateLimit || mongoose.model("RateLimit", RateLimitSchema);
+export const RateLimit =
+  mongoose.models.RateLimit || mongoose.model("RateLimit", RateLimitSchema);
 
 // Resume Report Schema — stores file binary (base64), metadata, and full ATS analysis
-const ResumeReportSchema = new mongoose.Schema({
-  fingerprintId: { type: String, required: true, index: true },
-  ipAddress: { type: String, required: true },
-  atsScore: { type: Number, required: true },
+const ResumeReportSchema = new mongoose.Schema(
+  {
+    fingerprintId: { type: String, required: true, index: true },
+    ipAddress: { type: String, required: true },
+    atsScore: { type: Number, required: true },
 
-  // File Storage — binary stored as base64 string directly in MongoDB
-  fileMeta: {
-    originalName: { type: String, required: true },
-    mimeType: { type: String, required: true },
-    sizeInBytes: { type: Number },
-    fileBase64: { type: String, required: true },
-  },
-
-  // Full analysis results for instant retrieval
-  insights: {
-    summary: { type: String },
-    missingKeywords: [String],
-    matchingKeywords: [String],
-    recommendations: [String],
-    sectionScores: {
-      keywordMatch: Number,
-      experienceQuality: Number,
-      structure: Number,
-      skills: Number,
-      formatting: Number,
-      education: Number,
-      contactInfo: Number,
+    // File Storage — binary stored as base64 string directly in MongoDB
+    fileMeta: {
+      originalName: { type: String, required: true },
+      mimeType: { type: String, required: true },
+      sizeInBytes: { type: Number },
+      fileBase64: { type: String, required: true },
     },
+
+    // Full analysis results for instant retrieval
+    insights: {
+      summary: { type: String },
+      missingKeywords: [String],
+      matchingKeywords: [String],
+      recommendations: [String],
+      sectionScores: {
+        keywordMatch: Number,
+        experienceQuality: Number,
+        structure: Number,
+        skills: Number,
+        formatting: Number,
+        education: Number,
+        contactInfo: Number,
+      },
+    },
+    shareId: { type: String, required: true, unique: true, index: true },
   },
-}, { timestamps: true });
+  { timestamps: true },
+);
 
 // Efficient lookup: find all reports for a user, newest first
 ResumeReportSchema.index({ fingerprintId: 1, createdAt: -1 });
 
-export const ResumeReport = mongoose.models.ResumeReport || mongoose.model("ResumeReport", ResumeReportSchema);
+if (mongoose.models.ResumeReport && !mongoose.models.ResumeReport.schema.paths.shareId) {
+  delete (mongoose.models as any).ResumeReport;
+}
+
+export const ResumeReport =
+  mongoose.models.ResumeReport ||
+  mongoose.model("ResumeReport", ResumeReportSchema);

@@ -41,6 +41,7 @@ export default function Home() {
   const [analysisResult, setAnalysisResult] = useState<ATSAnalysis | null>(
     null,
   );
+  const [shareId, setShareId] = useState<string | null>(null);
   const [docError, setDocError] = useState<string>("");
   const [rateLimitResetAt, setRateLimitResetAt] = useState<string | null>(null);
   const [timeRemaining, setTimeRemaining] = useState<string>("");
@@ -144,6 +145,84 @@ export default function Home() {
     };
   }, [previewUrl]);
 
+  // Save jobDescription to sessionStorage
+  useEffect(() => {
+    if (isMounted) {
+      try {
+        sessionStorage.setItem("ats_job_description", jobDescription);
+      } catch (e) {}
+    }
+  }, [jobDescription, isMounted]);
+
+  // Load and restore all state variables from sessionStorage on component mount
+  useEffect(() => {
+    if (!isMounted) return;
+
+    try {
+      // 1. Restore job description
+      const cachedJD = sessionStorage.getItem("ats_job_description");
+      if (cachedJD) setJobDescription(cachedJD);
+
+      // 2. Restore analysis result
+      const cachedAnalysis = sessionStorage.getItem("ats_analysis_result");
+      if (cachedAnalysis) {
+        setAnalysisResult(JSON.parse(cachedAnalysis));
+      }
+
+      // 3. Restore share ID
+      const cachedShareId = sessionStorage.getItem("ats_share_id");
+      if (cachedShareId) {
+        setShareId(cachedShareId);
+      }
+
+      // 4. Restore file and preview
+      const cachedFileMeta = sessionStorage.getItem("ats_file_meta");
+      const cachedFileDataUrl = sessionStorage.getItem("ats_file_data_url");
+      const cachedPreviewType = sessionStorage.getItem("ats_preview_type");
+
+      if (cachedFileMeta && cachedFileDataUrl) {
+        const meta = JSON.parse(cachedFileMeta);
+        
+        // Reconstruct File object from Data URL
+        const arr = cachedFileDataUrl.split(",");
+        const mime = arr[0].match(/:(.*?);/)?.[1] || meta.type;
+        const bstr = atob(arr[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while (n--) {
+          u8arr[n] = bstr.charCodeAt(n);
+        }
+        const restoredFile = new File([u8arr], meta.name, { type: mime });
+        setFile(restoredFile);
+
+        if (cachedPreviewType === "pdf") {
+          setPreviewType("pdf");
+          const blob = new Blob([u8arr], { type: mime });
+          const url = URL.createObjectURL(blob);
+          setPreviewUrl(url);
+        } else if (cachedPreviewType === "docx") {
+          setPreviewType("docx");
+          const cachedDocxHtml = sessionStorage.getItem("ats_docx_html");
+          if (cachedDocxHtml) {
+            setDocxHtml(cachedDocxHtml);
+          } else {
+            // Re-convert if html cache missing
+            restoredFile.arrayBuffer().then((buffer) => {
+              import("mammoth").then((mammoth) => {
+                mammoth.convertToHtml({ arrayBuffer: buffer }).then((result: any) => {
+                  setDocxHtml(result.value);
+                  sessionStorage.setItem("ats_docx_html", result.value);
+                });
+              });
+            });
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Failed to restore session cache:", err);
+    }
+  }, [isMounted]);
+
   // Widget reset refs
   const docTurnstileRef = useRef<any>(null);
   const feedbackTurnstileRef = useRef<any>(null);
@@ -193,6 +272,31 @@ export default function Home() {
 
     setFile(selectedFile);
 
+    // Cache file metadata
+    try {
+      sessionStorage.setItem(
+        "ats_file_meta",
+        JSON.stringify({
+          name: selectedFile.name,
+          size: selectedFile.size,
+          type: selectedFile.type,
+        })
+      );
+    } catch (e) {
+      console.warn("sessionStorage error:", e);
+    }
+
+    // Save base64/DataURL representation safely
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        sessionStorage.setItem("ats_file_data_url", e.target?.result as string);
+      } catch (err) {
+        console.warn("sessionStorage quota exceeded, cannot store base64:", err);
+      }
+    };
+    reader.readAsDataURL(selectedFile);
+
     // Generate preview — revoke previous blob URL to prevent memory leaks
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setDocxHtml(null);
@@ -200,14 +304,24 @@ export default function Home() {
     if (selectedFile.type === "application/pdf") {
       setPreviewType("pdf");
       setPreviewUrl(URL.createObjectURL(selectedFile));
+      try {
+        sessionStorage.setItem("ats_preview_type", "pdf");
+        sessionStorage.removeItem("ats_docx_html");
+      } catch (e) {}
     } else {
       // DOCX — convert to HTML client-side using mammoth
       setPreviewType("docx");
       setPreviewUrl(null);
+      try {
+        sessionStorage.setItem("ats_preview_type", "docx");
+      } catch (e) {}
       selectedFile.arrayBuffer().then((buffer) => {
         import("mammoth").then((mammoth) => {
           mammoth.convertToHtml({ arrayBuffer: buffer }).then((result: any) => {
             setDocxHtml(result.value);
+            try {
+              sessionStorage.setItem("ats_docx_html", result.value);
+            } catch (e) {}
           });
         });
       });
@@ -222,9 +336,19 @@ export default function Home() {
     setDocxHtml(null);
     setPreviewType(null);
     setDocError("");
+    setShareId(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+    // Clean up sessionStorage
+    try {
+      sessionStorage.removeItem("ats_file_meta");
+      sessionStorage.removeItem("ats_file_data_url");
+      sessionStorage.removeItem("ats_preview_type");
+      sessionStorage.removeItem("ats_docx_html");
+      sessionStorage.removeItem("ats_analysis_result");
+      sessionStorage.removeItem("ats_share_id");
+    } catch (err) {}
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -313,6 +437,15 @@ export default function Home() {
       }
 
       setAnalysisResult(data.analysis);
+      setShareId(data.shareId);
+
+      // Save to sessionStorage
+      try {
+        sessionStorage.setItem("ats_analysis_result", JSON.stringify(data.analysis));
+        sessionStorage.setItem("ats_share_id", data.shareId);
+      } catch (err) {
+        console.warn("sessionStorage quota exceeded, cannot save analysis result:", err);
+      }
 
       // Reset token after successful run (keep file + preview visible with results)
       setDocCaptchaToken("");
@@ -715,10 +848,40 @@ export default function Home() {
                       </div>
                     </div>
 
-                    <div className="flex-1 text-center md:text-left">
-                      <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">
-                        Evaluation Summary
-                      </h3>
+                    <div className="flex-1 text-left">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
+                        <h3 className="text-xl sm:text-2xl font-bold text-white">
+                          Evaluation Summary
+                        </h3>
+                        {shareId && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const shareUrl = `${window.location.origin}/report/${shareId}`;
+                              navigator.clipboard.writeText(shareUrl)
+                                .then(() => showToast("Copied share link to clipboard!"))
+                                .catch(() => showToast("Failed to copy link. Please copy it manually."));
+                            }}
+                            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 hover:from-blue-600 hover:via-indigo-600 hover:to-purple-700 text-white font-bold text-xs sm:text-sm shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 border border-indigo-400/20 hover:border-indigo-400/40 transition-all duration-300 hover:scale-[1.03] active:scale-[0.97] cursor-pointer relative overflow-hidden group animate-pulse-ring shrink-0"
+                          >
+                            <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full animate-shine pointer-events-none" />
+                            <svg
+                              className="w-4 h-4 relative z-10 shrink-0"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M8.684 10.742l4.882-2.441m0 0A5.998 5.998 0 1121.8 12a5.998 5.998 0 01-8.234 5.258m4.882-2.441l-4.882-2.441m-4.882 2.44M10.8 12a3 3 0 11-6 0 3 3 0 016 0z"
+                              />
+                            </svg>
+                            <span className="relative z-10">Share Report</span>
+                          </button>
+                        )}
+                      </div>
                       <p className="text-gray-400 text-xs sm:text-sm leading-relaxed">
                         {analysisResult.summary}
                       </p>

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { processDocument } from "@/lib/gemini";
 import { verifyCaptcha } from "@/lib/security";
-import { connectDB, RateLimit } from "@/lib/db";
+import { connectDB, RateLimit, ResumeReport } from "@/lib/db";
 import crypto from "crypto";
 import { LIMIT_THRESHOLD, RESET_HOURS } from "@/app/api/common";
 
@@ -152,7 +152,44 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ success: true, analysis });
+    // 6. Save Resume Report & Generate Share ID
+    const fileBase64 = buffer.toString("base64");
+
+    const forwardedFor = request.headers.get("x-forwarded-for");
+    const ip = forwardedFor
+      ? forwardedFor.split(",")[0].trim()
+      : (request as any).ip || "127.0.0.1";
+    const cryptoShareId = crypto.randomBytes(8).toString("hex");
+    try {
+      await ResumeReport.create({
+        fingerprintId: uniqueId,
+        ipAddress: ip,
+        atsScore: analysis.score,
+        shareId: cryptoShareId.toString(),
+        fileMeta: {
+          originalName: file.name,
+          mimeType: file.type,
+          sizeInBytes: file.size,
+          fileBase64,
+        },
+        insights: {
+          summary: analysis.summary,
+          missingKeywords: analysis.missingKeywords,
+          matchingKeywords: analysis.matchingKeywords,
+          recommendations: analysis.recommendations,
+          sectionScores: analysis.sectionScores,
+        },
+      });
+    } catch (dbErr) {
+      console.error("Failed to save ResumeReport to MongoDB:", dbErr);
+      throw new Error("Failed to save the resume report data to the database.");
+    }
+
+    return NextResponse.json({
+      success: true,
+      analysis,
+      shareId: cryptoShareId.toString(),
+    });
   } catch (err: any) {
     console.error("Error in process-document route:", err);
     return NextResponse.json(
