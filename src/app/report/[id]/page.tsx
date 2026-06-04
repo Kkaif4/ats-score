@@ -1,6 +1,16 @@
 import { connectDB, ResumeReport } from "@/lib/db";
 import { notFound } from "next/navigation";
 import ReportClientView from "./ReportClientView";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Shared ATS Resume Analysis Report",
+  description: "View the shared resume scoring and analysis report.",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 interface PageProps {
   params: Promise<{ id: string }>;

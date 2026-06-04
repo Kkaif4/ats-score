@@ -53,6 +53,7 @@ export default function Home() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [docxHtml, setDocxHtml] = useState<string | null>(null);
   const [previewType, setPreviewType] = useState<"pdf" | "docx" | null>(null);
+  const showPreviewPanel = (previewType === "pdf" && !!previewUrl) || (previewType === "docx");
 
   // Feedback Form States
   const [showFeedback, setShowFeedback] = useState(false);
@@ -207,16 +208,17 @@ export default function Home() {
           if (cachedDocxHtml) {
             setDocxHtml(cachedDocxHtml);
           } else {
-            // Re-convert if html cache missing
             restoredFile.arrayBuffer().then((buffer) => {
-              import("mammoth").then((mammoth) => {
-                mammoth
-                  .convertToHtml({ arrayBuffer: buffer })
-                  .then((result: any) => {
-                    setDocxHtml(result.value);
-                    sessionStorage.setItem("ats_docx_html", result.value);
-                  });
-              });
+              setTimeout(() => {
+                import("mammoth").then((mammoth) => {
+                  mammoth
+                    .convertToHtml({ arrayBuffer: buffer })
+                    .then((result: any) => {
+                      setDocxHtml(result.value);
+                      sessionStorage.setItem("ats_docx_html", result.value);
+                    });
+                });
+              }, 0);
             });
           }
         }
@@ -322,14 +324,16 @@ export default function Home() {
         sessionStorage.setItem("ats_preview_type", "docx");
       } catch (e) {}
       selectedFile.arrayBuffer().then((buffer) => {
-        import("mammoth").then((mammoth) => {
-          mammoth.convertToHtml({ arrayBuffer: buffer }).then((result: any) => {
-            setDocxHtml(result.value);
-            try {
-              sessionStorage.setItem("ats_docx_html", result.value);
-            } catch (e) {}
+        setTimeout(() => {
+          import("mammoth").then((mammoth) => {
+            mammoth.convertToHtml({ arrayBuffer: buffer }).then((result: any) => {
+              setDocxHtml(result.value);
+              try {
+                sessionStorage.setItem("ats_docx_html", result.value);
+              } catch (e) {}
+            });
           });
-        });
+        }, 0);
       });
     }
   };
@@ -557,6 +561,19 @@ export default function Home() {
 
   // Circular gauge parameter calculation — use static constant to avoid SSR/client float mismatch
   const GAUGE_CIRCUMFERENCE = 314.159; // 2 * Math.PI * 50, pre-computed
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "AI-Powered ATS Resume Scorer & Analyzer",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "All",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD",
+    },
+  };
+
   const getGaugeDashoffset = (score: number) =>
     GAUGE_CIRCUMFERENCE - (score / 100) * GAUGE_CIRCUMFERENCE;
 
@@ -571,10 +588,13 @@ export default function Home() {
         backgroundAttachment: "fixed",
       }}
     >
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <div
         className={`flex-1 w-full mx-auto px-4 py-8 sm:py-12 md:py-20 flex flex-col gap-8 md:gap-12 relative z-10 ${
-          (previewType === "pdf" && previewUrl) ||
-          (previewType === "docx" && docxHtml)
+          showPreviewPanel
             ? "max-w-full px-6 lg:px-10"
             : "max-w-7xl"
         }`}
@@ -594,8 +614,7 @@ export default function Home() {
         <main className="w-full">
           <div
             className={`w-full mx-auto ${
-              (previewType === "pdf" && previewUrl) ||
-              (previewType === "docx" && docxHtml)
+              showPreviewPanel
                 ? "grid grid-cols-1 lg:grid-cols-[3fr_3fr] gap-6 md:gap-8 items-start"
                 : "max-w-4xl"
             }`}
@@ -1085,8 +1104,7 @@ export default function Home() {
             </section>
 
             {/* Resume Preview Panel — Right Column (sticky, desktop only) */}
-            {(previewType === "pdf" && previewUrl) ||
-            (previewType === "docx" && docxHtml) ? (
+            {showPreviewPanel ? (
               <aside
                 className="hidden lg:block w-full order-2 lg:sticky lg:top-6"
                 style={{ alignSelf: "start" }}
@@ -1143,6 +1161,20 @@ export default function Home() {
                       style={{ maxHeight: "calc(100vh - 10rem)" }}
                       dangerouslySetInnerHTML={{ __html: docxHtml }}
                     />
+                  ) : previewType === "docx" && !docxHtml ? (
+                    <div
+                      className="w-full rounded-lg border border-gray-700 bg-gray-900/40 p-6 flex flex-col gap-4 animate-pulse"
+                      style={{ height: "calc(100vh - 10rem)" }}
+                    >
+                      <div className="h-4 bg-gray-800/60 rounded w-3/4"></div>
+                      <div className="h-4 bg-gray-800/40 rounded w-1/2"></div>
+                      <div className="h-4 bg-gray-800/50 rounded w-5/6"></div>
+                      <div className="h-4 bg-gray-800/30 rounded w-2/3"></div>
+                      <div className="h-4 bg-gray-800/60 rounded w-3/4"></div>
+                      <div className="h-4 bg-gray-800/40 rounded w-1/2"></div>
+                      <div className="h-4 bg-gray-800/50 rounded w-5/6"></div>
+                      <div className="h-4 bg-gray-800/30 rounded w-2/3"></div>
+                    </div>
                   ) : null}
                 </div>
               </aside>
