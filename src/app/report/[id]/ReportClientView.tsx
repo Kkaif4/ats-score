@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { Share2 } from "lucide-react";
 
 interface SectionScores {
   keywordMatch: number;
@@ -228,20 +229,7 @@ export default function ReportClientView({ report }: ReportClientViewProps) {
                         }}
                         className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 hover:from-blue-600 hover:via-indigo-600 hover:to-purple-700 text-white font-bold text-xs sm:text-sm shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 border border-indigo-400/20 hover:border-indigo-400/40 transition-all duration-300 hover:scale-[1.03] active:scale-[0.97] cursor-pointer relative overflow-hidden group animate-pulse-ring shrink-0"
                       >
-                        <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full animate-shine pointer-events-none" />
-                        <svg
-                          className="w-4 h-4 relative z-10 shrink-0"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M8.684 10.742l4.882-2.441m0 0A5.998 5.998 0 1121.8 12a5.998 5.998 0 01-8.234 5.258m4.882-2.441l-4.882-2.441m-4.882 2.44M10.8 12a3 3 0 11-6 0 3 3 0 016 0z"
-                          />
-                        </svg>
+                        <Share2 className="w-5 h-5" />
                         <span className="relative z-10">Copy Report Link</span>
                       </button>
                     </div>

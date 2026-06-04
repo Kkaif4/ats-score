@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { Turnstile } from "@marsidev/react-turnstile";
+import { Share2 } from "lucide-react";
 
 // Standard Site Key for Cloudflare Turnstile (uses test key if none defined in public env)
 const TURNSTILE_SITE_KEY =
@@ -182,7 +183,7 @@ export default function Home() {
 
       if (cachedFileMeta && cachedFileDataUrl) {
         const meta = JSON.parse(cachedFileMeta);
-        
+
         // Reconstruct File object from Data URL
         const arr = cachedFileDataUrl.split(",");
         const mime = arr[0].match(/:(.*?);/)?.[1] || meta.type;
@@ -209,10 +210,12 @@ export default function Home() {
             // Re-convert if html cache missing
             restoredFile.arrayBuffer().then((buffer) => {
               import("mammoth").then((mammoth) => {
-                mammoth.convertToHtml({ arrayBuffer: buffer }).then((result: any) => {
-                  setDocxHtml(result.value);
-                  sessionStorage.setItem("ats_docx_html", result.value);
-                });
+                mammoth
+                  .convertToHtml({ arrayBuffer: buffer })
+                  .then((result: any) => {
+                    setDocxHtml(result.value);
+                    sessionStorage.setItem("ats_docx_html", result.value);
+                  });
               });
             });
           }
@@ -280,7 +283,7 @@ export default function Home() {
           name: selectedFile.name,
           size: selectedFile.size,
           type: selectedFile.type,
-        })
+        }),
       );
     } catch (e) {
       console.warn("sessionStorage error:", e);
@@ -292,7 +295,10 @@ export default function Home() {
       try {
         sessionStorage.setItem("ats_file_data_url", e.target?.result as string);
       } catch (err) {
-        console.warn("sessionStorage quota exceeded, cannot store base64:", err);
+        console.warn(
+          "sessionStorage quota exceeded, cannot store base64:",
+          err,
+        );
       }
     };
     reader.readAsDataURL(selectedFile);
@@ -441,10 +447,16 @@ export default function Home() {
 
       // Save to sessionStorage
       try {
-        sessionStorage.setItem("ats_analysis_result", JSON.stringify(data.analysis));
+        sessionStorage.setItem(
+          "ats_analysis_result",
+          JSON.stringify(data.analysis),
+        );
         sessionStorage.setItem("ats_share_id", data.shareId);
       } catch (err) {
-        console.warn("sessionStorage quota exceeded, cannot save analysis result:", err);
+        console.warn(
+          "sessionStorage quota exceeded, cannot save analysis result:",
+          err,
+        );
       }
 
       // Reset token after successful run (keep file + preview visible with results)
@@ -858,26 +870,20 @@ export default function Home() {
                             type="button"
                             onClick={() => {
                               const shareUrl = `${window.location.origin}/report/${shareId}`;
-                              navigator.clipboard.writeText(shareUrl)
-                                .then(() => showToast("Copied share link to clipboard!"))
-                                .catch(() => showToast("Failed to copy link. Please copy it manually."));
+                              navigator.clipboard
+                                .writeText(shareUrl)
+                                .then(() =>
+                                  showToast("Copied share link to clipboard!"),
+                                )
+                                .catch(() =>
+                                  showToast(
+                                    "Failed to copy link. Please copy it manually.",
+                                  ),
+                                );
                             }}
                             className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 hover:from-blue-600 hover:via-indigo-600 hover:to-purple-700 text-white font-bold text-xs sm:text-sm shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 border border-indigo-400/20 hover:border-indigo-400/40 transition-all duration-300 hover:scale-[1.03] active:scale-[0.97] cursor-pointer relative overflow-hidden group animate-pulse-ring shrink-0"
                           >
-                            <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full animate-shine pointer-events-none" />
-                            <svg
-                              className="w-4 h-4 relative z-10 shrink-0"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M8.684 10.742l4.882-2.441m0 0A5.998 5.998 0 1121.8 12a5.998 5.998 0 01-8.234 5.258m4.882-2.441l-4.882-2.441m-4.882 2.44M10.8 12a3 3 0 11-6 0 3 3 0 016 0z"
-                              />
-                            </svg>
+                            <Share2 className="w-5 h-5" />
                             <span className="relative z-10">Share Report</span>
                           </button>
                         )}
